@@ -1,0 +1,180 @@
+.features {
+    display: flex;
+    align-items: center;
+    padding: 2rem 0 0 0;
+    width: 100%;
+}
+
+.featureSvg {
+    height: 150px;
+    width: 150px;
+}
+
+.titleCenter {
+    width: 100%;
+    justify-content: center;
+    padding: 2rem 0;
+    font-size: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.title {
+    padding: 0 0 0 1rem;
+    font-size: 2.0rem;
+    font-weight: bold;
+}
+
+.overview {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto 0 auto;
+    display: flex;
+}
+
+.sticky {
+    position: sticky;
+    top: 50px;
+}
+
+.gradient {
+    height: 8px;
+    width: 100%;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15), transparent);
+    max-width: 720px;
+    margin: 0 auto 0 auto;
+}
+
+[data-theme="dark"] .gradient {
+    background: linear-gradient(to bottom, rgba(25, 25, 25, 0.5), transparent);
+}
+
+.whiteBkg {
+    width: 100%;
+    background-color: white;
+}
+
+[data-theme="dark"] .whiteBkg {
+    background-color: #1b1b1d;
+}
+
+.tabContainer {
+    width: 100%;
+    max-width: 720px;
+    margin: 25px auto 0 auto;
+    display: flex;
+}
+
+hr.divider {
+    width: 100%;
+    border: 1px solid #444;
+    max-width: 720px;
+    margin: 0 auto 0 auto;
+    display: flex;
+}
+
+[data-theme="dark"] hr.divider {
+    border-color: white;
+}
+
+.tab:first-child {
+    margin: 25px 8px 0 18px;
+}
+
+.tab {
+    font-size: 1.2em;
+    border: 0;
+    border-bottom: none;
+    background-color: #ccc;
+    border-radius: 15px 15px 0 0;
+    color: white;
+    padding: 15px 20px 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 25px 0 0 0;
+    min-width: 120px;
+    min-height: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+    letter-spacing: 1px;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+[data-theme="dark"] .tab {
+    background-color: #1b1b1d;
+    color: #888;
+}
+
+@media (hover: hover) {
+    .tab:hover {
+        background-color: #eee;
+        border: 1px solid #ddd;
+        border-bottom: none;
+        color: #444;
+    }
+}
+
+@media (hover: hover) {
+    [data-theme="dark"] .tab:hover {
+        background-color: #444;
+        color: #ddd;
+    }
+}
+
+.tab:active {
+    background-color: #bbb;
+    color: #444;
+}
+
+[data-theme="dark"] .tab:active {
+    background-color: #444;
+    color: #ddd;
+}
+
+.tabSelected {
+    border: 1px solid #666;
+    border-bottom: none;
+    background-color: white;
+    color: #444;
+    pointer-events: none;
+    user-select: none;
+    transform: translateY(2px);
+}
+
+[data-theme="dark"] .tabSelected {
+    border-color: white;
+    background-color: #1b1b1d;
+    color: #ddd;
+}
+
+@media (hover: hover) {
+    .tabSelected:hover {
+        background-color: #444;
+    }
+}
+
+.tabSelected:active {
+    background-color: #444;
+}
+
+.tabSelected:focus {
+    background-color: white;
+    border: 1px solid #666;
+    border-bottom: none;
+}
+
+[data-theme="dark"] .tabSelected:focus {
+    border-color: white;
+    background-color: #1b1b1d;
+    color: #ddd;
+}
+
+.getStartedTextAndLogo {
+    text-align: center;
+    width: 300px;
+    margin: 0 auto 20px auto;
+}
