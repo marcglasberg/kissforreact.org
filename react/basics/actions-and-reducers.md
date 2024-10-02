@@ -4,19 +4,19 @@ sidebar_position: 4
 
 # Actions and reducers
 
-In Kiss, an **action** is any class you create that extends `ReduxAction<State>`.
+In Kiss, an **action** is any class you create that extends `KissAction<State>`.
 
-The `ReduxAction` is a built-in class provided by Kiss,
+The `KissAction` is a built-in class provided by Kiss,
 and `State` is the type you defined for your application [state](./store-and-state).
 
 For example, this is how you can declare an `Increment` action,
 that could be used in a [counter application](./counter-app-examples):
 
 ```tsx
-import { ReduxAction } from "kiss-state-react";
+import { KissAction } from "kiss-state-react";
 import { State } from 'State';
 
-class Increment extends ReduxAction<State> { }
+class Increment extends KissAction<State> { }
 ```
 
 ## The reducer
@@ -25,7 +25,7 @@ All your actions must implement a function called `reduce()`.
 Your IDE will show a compile-time error if you forget to implement it.
 
 ```tsx
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
 
   reduce() { 
     // ... 
@@ -42,7 +42,7 @@ To achieve this, the reducer has direct access to the current application state
 through `this.state`, and then it must return a new state. For example:
 
 ```tsx
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
 
   reduce() { 
     // The reducer has access to the current state
@@ -64,22 +64,22 @@ keeping your code organized.
 
 ## Base action
 
-Having to write `extends ReduxAction<State>` in every action definition can be cumbersome.
+Having to write `extends KissAction<State>` in every action definition can be cumbersome.
 
 In all the code I show in this documentation, you'll see I usually write `extend Action`
-instead of `extend ReduxAction<State>`.
+instead of `extend KissAction<State>`.
 
 This is because I'm assuming you have previously defined your own abstract base action class
-called simply `Action`, that itself extends `ReduxAction<State>`. Then, you may have all your
+called simply `Action`, that itself extends `KissAction<State>`. Then, you may have all your
 actions extend this `Action` class instead.
 
 This is how you can define the `Action` class in your own code:
 
 ```tsx 
-import { ReduxAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
-export abstract class Action extends ReduxAction<State> { }
+export abstract class Action extends KissAction<State> { }
 ```
 
 And then:
@@ -153,10 +153,8 @@ class AddRandomText extends Action {
 If you want to understand the above code in terms of traditional Redux patterns,
 the beginning of the `reduce` method is the equivalent of a middleware,
 and the return function `(state) => state.copy({text: text}))` is the equivalent of
-a traditional pure reducer.
-
-It's still Redux, just written in a way that is easy and boilerplate-free.
-No need for Thunks or Sagas.
+a traditional pure reducer. It's similar to Redux, just written in a way that is easy and
+boilerplate-free. No need for Thunks or Sagas.
 
 :::
 

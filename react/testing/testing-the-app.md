@@ -81,7 +81,7 @@ Then your test checks if the recorded information is as expected.
 
    ```ts
    [] as Array<{
-     action: ReduxAction<St>,
+     action: KissAction<St>,
      ini: boolean,
      prevState: St,
      newState: St,

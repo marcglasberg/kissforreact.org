@@ -4,14 +4,14 @@ sidebar_position: 2
 
 # Base action with common logic
 
-In Kiss, all actions must extend `ReduxAction<State>`.
+In Kiss, all actions must extend `KissAction<State>`.
 For example:
 
 ```tsx
-import { ReduxAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
   reduce() {
     return (state: State) => state.increment();
   }
@@ -19,24 +19,24 @@ class Increment extends ReduxAction<State> {
 ```
 
 In all the code I show in this documentation, you'll see I usually write `extend Action`
-instead of `extend ReduxAction<State>`.
+instead of `extend KissAction<State>`.
 
 This is because I'm assuming you have previously defined your own abstract base action class
-called simply `Action`, that itself extends `ReduxAction<State>`. Then, you may have all your
+called simply `Action`, that itself extends `KissAction<State>`. Then, you may have all your
 actions extend this `Action` class instead.
 
 This is how you would define the `Action` class:
 
 ```tsx 
-import { ReduxAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
-export abstract class Action extends ReduxAction<State> { }
+export abstract class Action extends KissAction<State> { }
 ```
 
 Remember this is optional, but recommended. The reason to do this is twofold:
 
-* First, you'll avoid writing `extends ReduxAction<State>` in every action class.
+* First, you'll avoid writing `extends KissAction<State>` in every action class.
   Now, you'll need to write `extends Action` instead, which is simpler.
 
 * And second, to have a common place to put any **common logic**
@@ -84,7 +84,7 @@ Now, suppose we have a lot of actions that need to access the `items` and `selec
 We could add getters and selectors to the base `Action` class:
 
 ```ts
-abstract class Action extends ReduxAction<State> {
+abstract class Action extends KissAction<State> {
   
   // Getters shortcuts
   get items(): Item[] { return this.state.items; }
@@ -129,4 +129,4 @@ In practice, your base action class may end up containing a lot of elaborate "se
 which then can be used by all your actions.
 
 The only requirement is that your actions now
-extend `Action` instead of `ReduxAction<State>`.
+extend `Action` instead of `KissAction<State>`.

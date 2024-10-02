@@ -81,7 +81,7 @@ Another option is using `wrapReduce()` to wrap the reducer:
 class SendMsg extends Action {
   constructor(private msg: Msg) { super(); }      
 
-  async wrapReduce(reduce: () => ReduxReducer<St>)) {   
+  async wrapReduce(reduce: () => KissReducer<St>)) {   
       
     // Get the message object before the reducer runs.  
     const previousMsg = this.state.getMsgById(msg.id);
@@ -111,10 +111,10 @@ you may now modify your [base action](./base-action-with-common-logic) to make i
 to add this behavior to multiple actions:
 
 ```ts
-export abstract class Action extends ReduxAction<State> {
+export abstract class Action extends KissAction<State> {
   observedState = undefined;  
   
-  async wrapReduce(reduce: () => ReduxReducer<St>)) {
+  async wrapReduce(reduce: () => KissReducer<St>)) {
     if (observedState === undefined) {
       return reduce;
     }        

@@ -35,7 +35,7 @@ You may modify your [base action](./base-action-with-common-logic) to make it ea
 to add this behavior to multiple actions:
 
 ```ts
-export abstract class Action extends ReduxAction<State> {
+export abstract class Action extends KissAction<State> {
 
   allowWhenLoggedOut = false;   
   

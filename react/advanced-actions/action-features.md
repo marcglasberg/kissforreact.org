@@ -96,7 +96,7 @@ Notes:
   multiple instances of the same action running at the same time:
 
   ```ts
-  class MyAction extends ReduxAction<State> {
+  class MyAction extends KissAction<State> {
      retry = {on: true}
      nonReentrant = true;
   }

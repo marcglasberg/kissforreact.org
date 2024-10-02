@@ -336,7 +336,7 @@ interface State {
 </Tabs>
 
 As [previously discussed](../advanced-actions/base-action-with-common-logic),
-you may create a base action class called `Action` that extends `ReduxAction`.
+you may create a base action class called `Action` that extends `KissAction`.
 By default, all actions that on their turn extend `Action` have access to the entire state,
 and can change any part of it.
 
@@ -551,10 +551,10 @@ as [previously discussed](../advanced-actions/base-action-with-common-logic).
 For example:
 
 ```tsx 
-import { ReduxAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
-export abstract class Action extends ReduxAction<State> { 
+export abstract class Action extends KissAction<State> { 
 
   // Getter shortcut to the user state.
   get user(): User { return this.state.user; }

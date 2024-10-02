@@ -13,7 +13,7 @@ or [graphql-request](https://www.npmjs.com/package/graphql-request#ignoreoperati
 
 ## Not only queries
 
-While the original Redux completely ignores async processes, leaving them to middleware
+While Redux completely ignores async processes, leaving them to middleware
 (like thunks), TanStack Query takes the opposite approach, treating all state management as
 querying, fetching, and caching.
 

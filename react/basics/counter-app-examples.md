@@ -29,7 +29,7 @@ Since the state itself is just a number,
 the action reducer must return `this.state + 1` to increment it.
 
 ```tsx
-class Increment extends ReduxAction<number> {
+class Increment extends KissAction<number> {
   reduce() {
     return this.state + 1; 
   }
@@ -86,7 +86,7 @@ The action reducer returns a new object, incrementing the counter by one:
 `{ counter: this.state.counter + 1 }`.
 
 ```tsx
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
   reduce() {
     return {
       counter: this.state.counter + 1,
@@ -154,7 +154,7 @@ The action reducer returns a new instance of the class, incrementing the counter
 `new State(this.state.counter + 1)`.
 
 ```tsx
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
   reduce() {
     return new State(this.state.counter + 1); 
   }
@@ -190,7 +190,7 @@ If you look at the `Increment` action, you'll see it reads the counter
 from the current state, and uses it to create a new, modified state:
 
 ```tsx
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
   reduce() {
     return new State(this.state.counter + 1); 
   }
@@ -216,7 +216,7 @@ class State {
 Now, the `Increment` action may simply call this function:
 
 ```tsx
-class Increment extends ReduxAction<State> {
+class Increment extends KissAction<State> {
   reduce() {
     return this.state.increment();
   }
@@ -299,7 +299,7 @@ We can also create parameterized **actions**.
 For example, we can create an `Add` action that receives a number and calls the `add` function:
 
 ```tsx
-class Add extends ReduxAction<State> {
+class Add extends KissAction<State> {
   constructor(readonly value: number) { super(); }
     
   reduce() {
@@ -318,14 +318,14 @@ In the `Increment` and `Decrement` buttons, we can now dispatch the `Add` action
 ## Defining a Base action
 
 A real app may have dozens or hundreds of actions.
-Since all of them must extend `ReduxAction<State>`, let's create a base class for them,
+Since all of them must extend `KissAction<State>`, let's create a base class for them,
 called `Action`:
 
 ```tsx
-abstract class Action extends ReduxAction<State> {}
+abstract class Action extends KissAction<State> {}
 ```
 
-Now, all actions can extend `Action` instead of `ReduxAction<State>`. For example:
+Now, all actions can extend `Action` instead of `KissAction<State>`. For example:
 
 ```tsx
 class Add extends Action {

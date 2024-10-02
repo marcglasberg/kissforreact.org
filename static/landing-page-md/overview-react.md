@@ -528,7 +528,7 @@ class State {
   selectedItem: number;
 }
 
-export abstract class Action extends ReduxAction<State> {
+export abstract class Action extends KissAction<State> {
 
   // Getter shortcuts   
   get items() { return this.state.items; }

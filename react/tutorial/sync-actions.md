@@ -172,27 +172,27 @@ class RemoveAllTodosAction extends Action {
 
 ## Note
 
-In Kiss, all actions must extend `ReduxAction<State>`,
+In Kiss, all actions must extend `KissAction<State>`,
 assuming `State` is the type that represents the state of your app.
 
 In the code above, and for the rest of this tutorial,
 I'm assuming you have defined your own base action class called simply `Action`
-that extends `ReduxAction<State>`, and then have all your actions
+that extends `KissAction<State>`, and then have all your actions
 extend this `Action` class instead.
 
 This is how you would define the `Action` class:
 
 ```tsx 
-import { ReduxAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
-export abstract class Action extends ReduxAction<State> {
+export abstract class Action extends KissAction<State> {
 }
 ```
 
 The reason to do this is twofold:
 
-* First, you'll avoid writing `extends ReduxAction<State>` in every action class.
+* First, you'll avoid writing `extends KissAction<State>` in every action class.
   Now, you'll need to write `extends Action` instead.
 
 * And second, to have a common place to put any common logic that all your actions should have

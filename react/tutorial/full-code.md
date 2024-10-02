@@ -40,7 +40,7 @@ root.render(
 import "./styles.css";
 import React from "react";
 import { useEffect, useState } from "react";
-import { Store, StoreProvider, ReduxAction } from "kiss-state-react";
+import { Store, StoreProvider, KissAction } from "kiss-state-react";
 import { ShowUserException, ClassPersistor } from "kiss-state-react";
 import { useSelect, useStore, useIsWaiting } from "kiss-state-react";
 import { useIsFailed, useExceptionFor } from "kiss-state-react";
@@ -77,7 +77,7 @@ const store = createStore<State>({
 });
 
 // Base `Action` class, to simplify declaring actions.
-abstract class Action extends ReduxAction<State> {}
+abstract class Action extends KissAction<State> {}
 
 // We wrap the component tree with a `StoreProvider`.
 export default function App() {

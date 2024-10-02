@@ -198,10 +198,10 @@ You may also modify your [base action](./base-action-with-common-logic) to make 
 to add this behavior to multiple actions:
 
 ```ts
-import { ReduxAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
-export abstract class Action extends ReduxAction<State> {
+export abstract class Action extends KissAction<State> {
   wrapErrorMessage = undefined;  
   
   wrapError(error) {

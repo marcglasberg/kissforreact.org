@@ -16,9 +16,7 @@ Kiss shares several goals with Redux:
 * Centralizing the application state and logic
 * Allowing easy debugging
 
-But Kiss is developer-friendly,
-shares no code with the traditional Redux or Redux Toolkit,
-and has none of their boilerplate.
+But Kiss is developer-friendly and has none of their boilerplate.
 
 Let's see some code comparisons.
 
@@ -250,102 +248,6 @@ expect(store.state.portfolio).toEqual(['IBM', 'TSLA']);
 ```
 
 <hr></hr>
-
-## Is Kiss really Redux?
-
-Let's recap
-the [three principles](https://redux.js.org/understanding/thinking-in-redux/three-principles) of
-Redux:
-
-* **Single source of truth**: The state of the entire application is stored in a single object tree
-  within a single store. This makes it easier to track changes over time and debug the application.
-
-* **State is read-only**: The state is immutable and can only be changed by dispatching an action to
-  the store.
-
-* **Changes are made with pure functions**:
-  A reducer is a pure function that takes the previous state and an action, and returns the next
-  state. The action specifies what occurred, and the reducer's role is to return the updated state
-  as a result of that action.
-
-The controversial principle here is the third one.
-Reducers, which describe the logic for handling changes, should be pure functions.
-However, since real apps need to account for async processes,
-this forces you to also use middleware like thunks, which are not pure functions.
-
-In Kiss, **sync actions** can also have reducers that are pure functions. For example:
-
-```ts   
-class AddValue extends Action {
-  constructor(readonly value: number) { super(); }    
-  reduce() { return this.state.add(this.value); }
-}
-```
-
-But **async actions** have reducers with two parts.
-The initial part can do async work, equivalent to a thunk,
-and the final "return" part can still be a pure function:
-
-```ts   
-class LoadText extends Action {
-      
-  async reduce() {
-
-    // This is the async code, equivalent to a thunk.
-    let text = await loadText();  
-    
-    // This is the pure function part,
-    // equivalent to the original Redux reducer. 
-    return (state) => this.state.withText(text);  
-  }
-}
-```
-
-If you define Kiss reducers as being composed of a middleware plus the pure function,
-then you are back to the original Redux principles, just written in a different way.
-
-How about the fact that Kiss puts reducers inside actions?
-Doesn't this couple “what happened” (the action) to “how things change” (the reducer)?
-
-Not really. When you dispatch an action, you don't need to know how the reducer will handle it:
-
-```ts
-// You specify the action `AddValue` with payload `42`,
-// but you don't need to know how the reducer will handle this.
-dispatch(new AddValue(42));
-```
-
-All the following features listed by Dan
-Abramov [here](https://medium.com/@dan_abramov/you-might-not-need-redux-be46360cf367) are
-equally present in Kiss:
-
-* Persist state to a local storage and then boot up from it, out of the box.
-* Pre-fill state on the server, send it to the client in HTML, and boot up from it, out of the box.
-* Serialize user actions and attach them, together with a state snapshot, to automated bug reports,
-  so that the product developers can replay them to reproduce the errors.
-* Pass action objects over the network to implement collaborative environments without dramatic
-  changes to how the code is written.
-* Maintain an undo history or implement optimistic mutations without dramatic changes to how the
-  code is written.
-* Travel between the state history in development, and re-evaluate the current state from the action
-  history when the code changes, a la TDD.
-* Provide full inspection and control capabilities to the development tooling so that product
-  developers can build custom tools for their apps.
-* Provide alternative UIs while reusing most of the business logic.
-
-However, when you are creating the code, understanding it, or debugging,
-you can easily navigate from the action to the reducer it affects, with a simple click in your IDE.
-
-After hearing this explanation, most people agree with me that Kiss is Redux.
-But if you happen to disagree, that's fine, as this is not really important.
-The important thing, the feature that I like the most about Redux,
-and that Kiss replicates, is that it's extremely predictable.
-
-In the last few years of using Kiss in production,
-the developers in my team and I never encountered a situation
-where I didn't understand what was happening.
-The code is very clear to read, I can always predict what will happen when I dispatch an action,
-and if there's a bug, I can always find it quickly.
 
 Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
 
