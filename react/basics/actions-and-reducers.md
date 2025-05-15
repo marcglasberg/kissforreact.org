@@ -75,7 +75,7 @@ actions extend this `Action` class instead.
 
 This is how you can define the `Action` class in your own code:
 
-```tsx 
+```tsx
 import { KissAction } from 'kiss-state-react';
 import { State } from 'State';
 
@@ -135,7 +135,7 @@ will change the state.
 For example, consider the following `AddRandomText` action,
 that fetches a random text from the internet and adds it to the state:
 
-```tsx 
+```tsx
 class AddRandomText extends Action {
 
   async reduce() {
@@ -146,17 +146,7 @@ class AddRandomText extends Action {
     return (state) => state.copy({text: text}));
   }
 } 
-``` 
-
-:::info
-
-If you want to understand the above code in terms of traditional Redux patterns,
-the beginning of the `reduce` method is the equivalent of a middleware,
-and the return function `(state) => state.copy({text: text}))` is the equivalent of
-a traditional pure reducer. It's similar to Redux, just written in a way that is easy and
-boilerplate-free. No need for Thunks or Sagas.
-
-:::
+```
 
 ## Actions can throw errors
 

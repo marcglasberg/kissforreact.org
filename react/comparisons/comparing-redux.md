@@ -20,7 +20,7 @@ But Kiss is developer-friendly and has none of their boilerplate.
 
 Let's see some code comparisons.
 
-<hr></hr>
+---
 
 ## Wiring reducers to the store
 
@@ -71,7 +71,7 @@ Let's see some code comparisons.
   and [createAction](https://redux-toolkit.js.org/api/createAction) to create the actions,
   the reducer functions, and then wire them up to the store:
 
-  ```ts title="Redux Toolkit"   
+  ```ts title="Redux Toolkit"
   const increment = createAction<number>('increment')
   const decrement = createAction<number>('decrement')
   
@@ -119,7 +119,7 @@ class Decrement extends Action {
   constructor(readonly value: number) { super(); }    
   reduce() { return this.state.add(-this.value); }
 }
-``` 
+```
 
 ## Thunk middleware
 
@@ -247,8 +247,6 @@ await dispatchAndWait(new BuyAction('TSLA'));
 expect(store.state.portfolio).toEqual(['IBM', 'TSLA']);
 ```
 
-<hr></hr>
+---
 
 Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
-
-

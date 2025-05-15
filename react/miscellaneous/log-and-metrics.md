@@ -69,8 +69,7 @@ Its parameters are:
 
 - `dispatchCount` is the sequential number of the dispatch.
 
-The state-observer is a good place to add an interface to the Redux DevTools.
-It's also a good place to logs actions and state, and collect metrics. For example:
+The state-observer is a good place to log actions and state, and collect metrics. For example:
 
 ```ts
 function stateObserver(action, prevState, newState, error, dispatchCount) {

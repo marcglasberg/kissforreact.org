@@ -84,14 +84,14 @@ const config = {
         {name: 'og:title', content: 'Kiss'},
         {name: 'og:description', content: 'by Marcelo Glasberg'},
         {name: 'og:url', content: 'https://kissforreact.org'},
-        {name: 'og:image', content: 'https://kissforreact.org/img/platipus_FlutterReact.jpg'},
+        {name: 'og:image', content: 'https://kissforreact.org/img/LandscapeLake.jpg'},
         {name: 'twitter:card', content: 'summary_large_image'},
         {name: 'twitter:title', content: 'Kiss'},
         {
           name: 'twitter:description',
-          content: 'The modern version of Redux. State management that is simple to learn and easy to use; Powerful enough to handle complex applications with millions of users; Testable.'
+          content: 'React state management that is simple to learn and easy to use; Handles complex applications with millions of users; Testable.'
         },
-        {name: 'twitter:image', content: 'https://kissforreact.org/img/platipus_FlutterReact.jpg'},
+        {name: 'twitter:image', content: 'https://kissforreact.org/img/LandscapeLake.jpg'},
       ],
       navbar: {
         title: '',

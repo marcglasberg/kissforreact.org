@@ -5,7 +5,7 @@ Its goal is to be extremely simple to use, yet as powerful as
 Redux&nbsp;Toolkit ([compare](/react/comparisons/comparing-redux))
 and TanStack&nbsp;Query ([compare](/react/comparisons/comparing-tanstack)) put together.
 
-&nbsp;                     
+&nbsp;
 
 # Store and state
 
