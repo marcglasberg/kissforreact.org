@@ -1,4 +1,4 @@
-Kiss (**K**eep **I**t **S**imple **S**tate) is a modern JavaSript/TypeScript state management library for
+Kiss (**K**eep **I**t **S**imple **S**tate) is a modern JavaScript/TypeScript state management library for
 React, launched in May 2025.
 
 Its goal is to be extremely simple to use, yet as powerful as
@@ -52,7 +52,7 @@ It rebuilds when the state changes.
 function MyComponent() { 
   const state = useAllState();   
   
-  return <div>{state.name} has {state.age} years old</div>;    
+  return <div>{state.name} is {state.age} years old</div>;    
 };
 ```
 
@@ -66,7 +66,7 @@ function MyComponent() {
   const name = useSelect((state) => state.name);   
   const age = useSelect((state) => state.age);
      
-  return <div>{name} has {age} years old</div>;    
+  return <div>{name} is {age} years old</div>;    
 };
 ```
 
@@ -82,7 +82,7 @@ function MyComponent() {
     age: state.age
   });
        
-  return <div>{state.name} has {state.age} years old</div>;    
+  return <div>{state.name} is {state.age} years old</div>;    
 };
 ```
 
@@ -90,7 +90,7 @@ function MyComponent() {
 
 # Actions and reducers
 
-An **action** is a class that contain its own **reducer**.
+An **action** is a class that contains its own **reducer**.
 
 ```tsx
 class Increment extends Action {
@@ -129,7 +129,7 @@ await store.dispatchAndWaitAll([new Increment(), new LoadText()]);
 
 # Components can dispatch actions
 
-The hooks to dispatch actions are `useDispatch` , `useDispatchAll` etc.
+The hooks to dispatch actions are `useDispatch`, `useDispatchAll` etc.
 
 ```tsx
 function MyComponent() { 
@@ -182,15 +182,8 @@ class LoadText extends Action {
     // Change the state with the downloaded information
     return (state) => text;
   }
+}
 ```
-
-&nbsp;
-
-> If you want to understand the above code in terms of traditional Redux patterns,
-> the beginning of the `reduce` method is the equivalent of a middleware,
-> and the return function `(state) => text` is the equivalent of a traditional reducer.
-> It's still Redux, just written in a way that is easy and boilerplate-free.
-> No need for Thunks or Sagas.
 
 &nbsp;
 
@@ -199,7 +192,7 @@ class LoadText extends Action {
 If something bad happens, you can simply **throw an error**. In this case, the state will not
 change. Errors are caught globally and can be handled in a central place, later.
 
-In special, if you throw a `UserException`, which is a type provided by Kiss,
+In particular, if you throw a `UserException`, which is a type provided by Kiss,
 a dialog (or other UI) will open automatically, showing the error message to the user.
 
 ```tsx
@@ -207,13 +200,12 @@ class LoadText extends Action {
   
   async reduce() {
     let response = await fetch("https://dummyjson.com/todos/random/1");
-    if (!response.ok) throw new UserException("Failed to load.");
+    if (!response.ok) throw new UserException("Failed to load.");    
     
-    let jsonResponse = await response.json();
-    let text = jsonResponse[0].todo;          
     let text = await response.text();     
     return (state) => text;
   }
+}
 ```
 
 &nbsp;
@@ -298,9 +290,9 @@ class SellStockForPrice extends Action {
     let amount = await postSellOrder(this.stock);    
     
     return (state) => 
-      state.copy(
+      state.copy({
         stocks: state.stocks.setAmount(this.stock, amount),
-      );
+      });
   }
 }
 ```
@@ -348,10 +340,10 @@ And you can specify the retry policy:
 class LoadText extends Action {
 
   retry = {
-    initialDelay: 350, // Millisecond delay before the first attempt
+    initialDelay: 350, // Milliseconds delay before the first attempt
     maxRetries: 3,     // Number of retries before giving up
     multiplier: 2,     // Delay increase factor for each retry
-    maxDelay: 5000,    // Max millisecond delay between retries
+    maxDelay: 5000,    // Max milliseconds delay between retries
   }
    
   reduce() { ... }
@@ -441,7 +433,7 @@ class SaveName extends Action {
 # Persist the state
 
 You can add a `persistor` to save the state to the local device disk.
-It supports serializing JavaScript objects **and** ES6 classes.
+It supports serialization of JavaScript objects **and** ES6 classes.
 
 ```tsx
 const store = createStore<State>({  
@@ -467,7 +459,7 @@ class State {
 test('Selecting an item', async () => {
 
   const store = createStore<State>({      
-    initialState: new State(['A', 'B', 'C'], -1);    
+    initialState: new State(['A', 'B', 'C'], -1)
   });
   
   // Should select item 2
@@ -494,8 +486,8 @@ and a `globalWrapError` to catch all errors.
 ```tsx
 const store = createStore<string>({    
   stateObserver: (action, prevState, newState, error, count) => { ... },
-  errorObserver: (error, action, store) => { ... }
-  actionObserver: (action, count, ini) => { ... }
+  errorObserver: (error, action, store) => { ... },
+  actionObserver: (action, count, ini) => { ... },
   globalWrapError: (error) => { ... }
 });  
 ```
@@ -509,7 +501,7 @@ automatically show a message to the user in an error dialog:
 ```tsx
 globalWrapError: (error: any) => {
    return (error instanceof FirestoreError)
-      ? UserException('Error connecting to Firebase')
+      ? new UserException('Error connecting to Firebase')
       : error;
    }  
 ```
