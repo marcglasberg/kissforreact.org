@@ -1,5 +1,5 @@
 Kiss (**K**eep **I**t **S**imple **S**tate) is a modern JavaSript/TypeScript state management library for
-React, launched in October 2024.
+React, launched in May 2025.
 
 Its goal is to be extremely simple to use, yet as powerful as
 Redux&nbsp;Toolkit ([compare](/react/comparisons/comparing-redux))

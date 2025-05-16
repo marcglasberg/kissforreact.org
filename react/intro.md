@@ -19,7 +19,7 @@ and other people on your team will easily understand and modify your code.
 ## What is it?
 
 Kiss (Keep It Simple State) is a modern JavaSript/TypeScript state management library for
-React, created by [Marcelo Glasberg](https://github.com/marcglasberg), and launched in October 2024.
+React, created by [Marcelo Glasberg](https://github.com/marcglasberg), and launched in May 2025.
 
 While new for React, Kiss is a mature solution,
 having been [available for Flutter](https://pub.dev/packages/async_redux) with a different name for a few years,
