@@ -12,17 +12,17 @@ and TanStack&nbsp;Query ([compare](/react/comparisons/comparing-tanstack)) put t
 The **store** holds all the application **state**. A few examples:
 
 ```tsx
-// State is a number
+// If your state is a number
 const store = createStore<number>({initialState: 1});
 ```
 
 ```tsx
-// State is a plain JavaScript object
+// If your state is a plain JavaScript object
 const store = createStore({initialState: {name: 'Mary', age: 25}});
 ```
 
 ```tsx
-// State is an ES6 class object
+// If your state is an ES6 class object
 class State { constructor(public name: string, public age: number){} }
 const store = createStore<State>({initialState: new State('Mary', 25)});
 ```
@@ -90,7 +90,8 @@ function MyComponent() {
 
 # Actions and reducers
 
-An **action** is a class that contains its own **reducer**.
+An **action** is a class that contains its own **reducer** function. 
+This reducer has access to the current state, and its goal is to return a new and modified state.
 
 ```tsx
 class Increment extends Action {
@@ -108,8 +109,9 @@ class Increment extends Action {
 
 The store state is **immutable**.
 
-The only way to change the store **state** is by dispatching an **action**.
-The action reducer returns a new state, that replaces the old one.
+The only way to change the store state is by dispatching an **action**.
+This will run the action's reducer to get a new state that will replace the current one,
+and rebuild all components that use it.
 
 ```tsx
 // Dispatch an action
@@ -163,7 +165,7 @@ function MyComponent() {
 
 # Actions can do asynchronous work
 
-They can download information from the internet, or do any other async work.
+Actions can download information from the internet, or do any other async work.
 
 ```tsx
 const store = createStore<string>({initialState: ''});
@@ -189,7 +191,7 @@ class LoadText extends Action {
 
 # Actions can throw errors
 
-If something bad happens, you can simply **throw an error**. In this case, the state will not
+If something bad happens, you may simply **throw an error**. In this case, the state will not
 change. Errors are caught globally and can be handled in a central place, later.
 
 In particular, if you throw a `UserException`, which is a type provided by Kiss,
