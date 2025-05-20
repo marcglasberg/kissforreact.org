@@ -21,9 +21,8 @@ and other people on your team will easily understand and modify your code.
 Kiss (Keep It Simple State) is a modern JavaSript/TypeScript state management library for
 React, created by [Marcelo Glasberg](https://github.com/marcglasberg), and launched in May 2025.
 
-While new for React, Kiss is a mature solution,
-having been [available for Flutter](https://pub.dev/packages/async_redux) with a different name for a few years,
-meaning its features have been battle-tested in hundreds of real-world applications.
+While new to React, Kiss is a mature solution,
+having been [available for Flutter](https://pub.dev/packages/async_redux) with a different name for a few years, meaning its features have been battle-tested in hundreds of real-world applications.
 
 ## Installation
 
@@ -65,4 +64,3 @@ and draws inspiration and good ideas from these solutions:
 
 Next, let's follow a short tutorial to see how easy it is to use Kiss.
 We'll create a simple _Todo List_ app.
-
