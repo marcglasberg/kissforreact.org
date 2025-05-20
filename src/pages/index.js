@@ -14,6 +14,7 @@ function HomepageHeader() {
         <img src="img/KISS.svg" alt="KISS State"
           style={{ width: 160, height: 130 }} />
         <br />
+        <img src="img/react.svg" alt="React" style={{ width: 62, height: 42 }} />
         <img src="img/StateManagement.svg" alt="State Management for React" style={{ width: 360, height: 40 }} />
         <Heading as="h1" className="hero__title" />
         <Link
