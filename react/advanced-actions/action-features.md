@@ -42,17 +42,17 @@ class LoadText extends Action {
 
 The retry parameters are:
 
-- Initial Delay: The delay before the first retry attempt.
-- Multiplier: The factor by which the delay increases for each subsequent retry.
-- Maximum Retries: The maximum number of retries before giving up.
-- Maximum Delay: The maximum delay between retries to avoid excessively long wait times.
+* Initial Delay: The delay before the first retry attempt.
+* Multiplier: The factor by which the delay increases for each subsequent retry.
+* Maximum Retries: The maximum number of retries before giving up.
+* Maximum Delay: The maximum delay between retries to avoid excessively long wait times.
 
 And their default values are:
 
-- `initialDelay` is `350` milliseconds.
-- `multiplier` is `2`, which means the default delays are: 350 millis, 700 millis, and 1.4 seg.
-- `maxRetries` is `3`, meaning it will try a total of 4 times.
-- `maxDelay` is `5000` milliseconds (which means 5 seconds).
+* `initialDelay` is `350` milliseconds.
+* `multiplier` is `2`, which means the default delays are: 350 millis, 700 millis, and 1.4 seg.
+* `maxRetries` is `3`, meaning it will try a total of 4 times.
+* `maxDelay` is `5000` milliseconds (which means 5 seconds).
 
 You can change one or more of the default values.
 
@@ -80,19 +80,19 @@ class LoadText extends Action {
 
 Notes:
 
-- If you `await dispatchAndWait(action)` and the action uses unlimited retries,
+* If you `await dispatchAndWait(action)` and the action uses unlimited retries,
   it may never finish if it keeps failing. So, be careful when using it.
 
-- If the `before` method throws an error, the retry will NOT happen.
+* If the `before` method throws an error, the retry will NOT happen.
 
-- The retry delay only starts after the reducer finishes executing. For example, if the
+* The retry delay only starts after the reducer finishes executing. For example, if the
   reducer takes 1 second to fail, and the retry delay is 350 millis, the first retry will
   happen 1.35 seconds after the first reducer started.
 
-- When the action finally fails, the last error will be rethrown, and the previous ones
+* When the action finally fails, the last error will be rethrown, and the previous ones
   will be ignored.
 
-- For most actions that use `retry`, consider also making them non-Reentrant to avoid
+* For most actions that use `retry`, consider also making them non-Reentrant to avoid
   multiple instances of the same action running at the same time:
 
   ```ts
@@ -102,18 +102,18 @@ Notes:
   }
   ```
 
-- Keep in mind that all actions using the `retry` feature will become asynchronous, even
+* Keep in mind that all actions using the `retry` feature will become asynchronous, even
   if the original action was synchronous.
 
-- If necessary, you can know the current _attempt number_ by using `this.attempts`.
+* If necessary, you can know the current _attempt number_ by using `this.attempts`.
 
 ## debounce
 
-To limit how often an action occurs in response to rapid inputs, 
-add something like `debounce = 300` to your action class, 
-where `300` is the number of milliseconds. 
+To limit how often an action occurs in response to rapid inputs,
+add something like `debounce = 300` to your action class,
+where `300` is the number of milliseconds.
 
-For example, when a user types in a search bar, debouncing ensures that not every keystroke 
+For example, when a user types in a search bar, debouncing ensures that not every keystroke
 triggers a server request. Instead, it waits until the user pauses typing before acting.
 
 ```tsx
@@ -133,9 +133,9 @@ class SearchText extends Action {
 
 ## throttle
 
-To prevent an action from running too frequently, 
+To prevent an action from running too frequently,
 add something like `throttle = 5000` to your action class,
-where `5000` means 5 seconds. 
+where `5000` means 5 seconds.
 
 After the action runs it's considered _fresh_, and it won't run
 again for a set period of time, even if you dispatch it.
@@ -235,8 +235,7 @@ If you try to use both at the same time, an error will be thrown.
 
 ## checkInternet
 
-Adding `checkInternet = { dialog: true }` to your action ensures it only runs with internet,
-otherwise an **error dialog** prompts users to check their connection:
+Adding `checkInternet = { dialog: true }` to your action ensures it only runs with internet. Otherwise, an **error dialog** prompts users to check their connection:
 
 ```tsx
 class LoadPrices extends Action {  
@@ -262,7 +261,35 @@ function MyComponent() {
 };   
 ```
 
-> Important: _this feature is still in development. It should be available soon._
+In web environments, the default is checking the availability of the internet using `navigator.onLine`. However, `navigator.onLine` is not very useful, as it only tells you if there's a local connection, and not whether the internet is accessible. Also, this only really works for the web.
+
+In other words, to make `checkInternet` work properly you will need to provide your own logic to check for internet availability.
+To that end, you must override the `hasInternet` method of your base action, and then provide your own logic to determine if the internet is available or not.
+
+Alternatives are using the [NetInfo](https://www.npmjs.com/package/@rescript-react-native/netinfo) package for React Native,
+or using the [is-online](https://www.npmjs.com/package/is-online) package
+for Node.js and the browser.
+
+For an example using NetInfo, first add it to your `package.json`:
+
+```json
+"dependencies": {
+   "@react-native-community/netinfo": "^11.4.1"
+}
+```
+
+Then, import it in your base action, and override the `hasInternet()` method:
+
+```typescript
+import NetInfo from '@react-native-community/netinfo';
+
+export abstract class Action extends KissAction<State> {
+
+   protected hasInternet(): Promise<boolean> {
+      return NetInfo.fetch().then(state => state.isConnected);
+   }
+}
+```
 
 ## optimisticUpdate
 
