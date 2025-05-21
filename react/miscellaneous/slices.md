@@ -235,7 +235,7 @@ class State {
 
 </TabItem>
 <TabItem value="plainobjs" label="Plain objects">
-    
+
 ```ts
 interface Stock {
     ticker: string;
@@ -330,7 +330,7 @@ interface State {
     alerts: { [alertId: string]: Alert };
     settings: Settings;
 }   
-```   
+```
 
 </TabItem>
 </Tabs>
@@ -344,8 +344,8 @@ To implement slices, you can implement other extra base actions,
 each with access to only a part of the state.
 
 The first level of the state shown above
-contains `user`, `stocks`, `transactions`, `news`, `alerts`, and `settings`. 
-Each of these could be a slice, so let's create a base action 
+contains `user`, `stocks`, `transactions`, `news`, `alerts`, and `settings`.
+Each of these could be a slice, so let's create a base action
 that has easier access to the `user` state, and can only change that `user` state:
 
 Here is the code for when your state is made of classes,
@@ -354,7 +354,7 @@ and also for when it's made of plain objects:
 <Tabs>
 <TabItem value="classes" label="Classes">
 
-```tsx 
+```tsx
 abstract class UserAction extends Action {
 
   // Getter shortcut to the user state.
@@ -447,7 +447,7 @@ For example, let's see how to create a slice for the second level, `user.portfol
 <Tabs>
 <TabItem value="classes" label="Classes">
 
-```tsx 
+```tsx
 abstract class PortfolioAction extends Action {
 
   // Getter shortcut to the portfolio state.
@@ -550,7 +550,7 @@ as [previously discussed](../advanced-actions/base-action-with-common-logic).
 
 For example:
 
-```tsx 
+```tsx
 import { KissAction } from 'kiss-for-react';
 import { State } from 'State';
 

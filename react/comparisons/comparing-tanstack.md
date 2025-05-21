@@ -358,4 +358,3 @@ await dispatchAndWait(new BuyAction('TSLA'));
 // Assert we now have IBM and Tesla
 expect(store.state.portfolio).toEqual(['IBM', 'TSLA']);
 ```
-
