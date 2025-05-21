@@ -286,7 +286,7 @@ import NetInfo from '@react-native-community/netinfo';
 export abstract class Action extends KissAction<State> {
 
    protected hasInternet(): Promise<boolean> {
-      return NetInfo.fetch().then(state => state.isConnected);
+      return NetInfo.fetch().then(state => state.isConnected ?? true);
    }
 }
 ```
