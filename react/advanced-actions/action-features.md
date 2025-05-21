@@ -8,10 +8,10 @@ You can add **features** to your actions, to accomplish common tasks:
 
 * [nonReentrant](#nonreentrant)
 * [retry](#retry)
+* [checkInternet](#checkinternet)
 * [debounce](#debounce)
 * [throttle](#throttle)
 * [ignoreOld](#ignoreold)
-* [checkInternet](#checkinternet)
 * [optimisticUpdate](#optimisticupdate)
 
 ## nonReentrant
@@ -106,6 +106,64 @@ Notes:
   if the original action was synchronous.
 
 * If necessary, you can know the current _attempt number_ by using `this.attempts`.
+
+## checkInternet
+
+Adding `checkInternet = { dialog: true }` to your action ensures it only runs with internet. Otherwise, an **error dialog** prompts users to check their connection:
+
+```tsx
+class LoadPrices extends Action {  
+  
+  checkInternet = { dialog: true } 
+   
+  async reduce() { ... } 
+}   
+```
+
+Use `checkInternet = { dialog: false }` if you don't want to open a dialog.
+Instead, you can display some information in your widgets:
+
+```tsx
+function MyComponent() {
+  const isFailed = useIsFailed(LoadPrices);
+
+  return (
+    <div>
+      {isFailed ? <p>No Internet connection</p> : null}
+    </div>
+  );
+};   
+```
+
+In web environments, the default is checking the availability of the internet using `navigator.onLine`. However, `navigator.onLine` is not very useful, as it only tells you if there's a local connection, and not whether the internet is accessible. Also, this only really works for the web.
+
+In other words, to make `checkInternet` work properly you will need to provide your own logic to check for internet availability.
+To that end, you must override the `hasInternet` method of your base action, and then provide your own logic to determine if the internet is available or not.
+
+Alternatives are using the [NetInfo](https://www.npmjs.com/package/@rescript-react-native/netinfo) package for React Native,
+or using the [is-online](https://www.npmjs.com/package/is-online) package
+for Node.js and the browser.
+
+For an example using NetInfo, first add it to your `package.json`:
+
+```json
+"dependencies": {
+   "@react-native-community/netinfo": "^11.4.1"
+}
+```
+
+Then, import it in your base action, and override the `hasInternet()` method:
+
+```typescript
+import NetInfo from '@react-native-community/netinfo';
+
+export abstract class Action extends KissAction<State> {
+
+   protected hasInternet(): Promise<boolean> {
+      return NetInfo.fetch().then(state => state.isConnected ?? true);
+   }
+}
+```
 
 ## debounce
 
@@ -232,64 +290,6 @@ if an older one is running, `ignoreOld` aborts the older actions if a newer one 
 If you try to use both at the same time, an error will be thrown.
 
 > Important: _this feature is still in development. It should be available soon._
-
-## checkInternet
-
-Adding `checkInternet = { dialog: true }` to your action ensures it only runs with internet. Otherwise, an **error dialog** prompts users to check their connection:
-
-```tsx
-class LoadPrices extends Action {  
-  
-  checkInternet = { dialog: true } 
-   
-  async reduce() { ... } 
-}   
-```
-
-Use `checkInternet = { dialog: false }` if you don't want to open a dialog.
-Instead, you can display some information in your widgets:
-
-```tsx
-function MyComponent() {
-  const isFailed = useIsFailed(LoadPrices);
-
-  return (
-    <div>
-      {isFailed ? <p>No Internet connection</p> : null}
-    </div>
-  );
-};   
-```
-
-In web environments, the default is checking the availability of the internet using `navigator.onLine`. However, `navigator.onLine` is not very useful, as it only tells you if there's a local connection, and not whether the internet is accessible. Also, this only really works for the web.
-
-In other words, to make `checkInternet` work properly you will need to provide your own logic to check for internet availability.
-To that end, you must override the `hasInternet` method of your base action, and then provide your own logic to determine if the internet is available or not.
-
-Alternatives are using the [NetInfo](https://www.npmjs.com/package/@rescript-react-native/netinfo) package for React Native,
-or using the [is-online](https://www.npmjs.com/package/is-online) package
-for Node.js and the browser.
-
-For an example using NetInfo, first add it to your `package.json`:
-
-```json
-"dependencies": {
-   "@react-native-community/netinfo": "^11.4.1"
-}
-```
-
-Then, import it in your base action, and override the `hasInternet()` method:
-
-```typescript
-import NetInfo from '@react-native-community/netinfo';
-
-export abstract class Action extends KissAction<State> {
-
-   protected hasInternet(): Promise<boolean> {
-      return NetInfo.fetch().then(state => state.isConnected ?? true);
-   }
-}
-```
 
 ## optimisticUpdate
 
