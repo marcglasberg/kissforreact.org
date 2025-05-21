@@ -116,7 +116,7 @@ const config = {
           },
           // {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/marcglasberg/kiss-state-react',
+            href: 'https://github.com/marcglasberg/kiss-for-react',
             label: 'GitHub',
             position: 'right',
           },
@@ -165,11 +165,11 @@ const config = {
               // },
               {
                 label: 'GitHub',
-                href: 'https://github.com/marcglasberg/kiss-state-react',
+                href: 'https://github.com/marcglasberg/kiss-for-react',
               },
               {
                 label: 'npm',
-                href: 'https://www.npmjs.com/package/kiss-state-react'
+                href: 'https://www.npmjs.com/package/kiss-for-react'
               },
             ],
           },

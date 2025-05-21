@@ -198,7 +198,7 @@ You may also modify your [base action](./base-action-with-common-logic) to make 
 to add this behavior to multiple actions:
 
 ```ts
-import { KissAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-for-react';
 import { State } from 'State';
 
 export abstract class Action extends KissAction<State> {

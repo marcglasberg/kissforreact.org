@@ -13,7 +13,7 @@ For example, this is how you can declare an `Increment` action,
 that could be used in a [counter application](./counter-app-examples):
 
 ```tsx
-import { KissAction } from "kiss-state-react";
+import { KissAction } from "kiss-for-react";
 import { State } from 'State';
 
 class Increment extends KissAction<State> { }
@@ -76,7 +76,7 @@ actions extend this `Action` class instead.
 This is how you can define the `Action` class in your own code:
 
 ```tsx
-import { KissAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-for-react';
 import { State } from 'State';
 
 export abstract class Action extends KissAction<State> { }
@@ -156,7 +156,7 @@ In this case, the state will not change.
 Let's modify the previous `AddRandomText` action to throw an error if the fetch fails:
 
 ```tsx
-import { UserException } from "kiss-state-react";
+import { UserException } from "kiss-for-react";
 
 class AddRandomText extends Action {
 

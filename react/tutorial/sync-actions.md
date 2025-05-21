@@ -183,7 +183,7 @@ extend this `Action` class instead.
 This is how you would define the `Action` class:
 
 ```tsx 
-import { KissAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-for-react';
 import { State } from 'State';
 
 export abstract class Action extends KissAction<State> {

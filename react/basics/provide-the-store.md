@@ -5,7 +5,7 @@ sidebar_position: 2
 # Provide the store
 
 To provide the store [you just created](./store-and-state) to all your app,
-import the `StoreProvider` component from `kiss-state-react` and wrap your app with it.
+import the `StoreProvider` component from `kiss-for-react` and wrap your app with it.
 
 Note your code should have a **single** store provider, at the top of your component tree.
 
@@ -28,7 +28,7 @@ root.render(
 
 ```tsx title="App.tsx"
 import React from "react";
-import { createStore, StoreProvider } from "kiss-state-react";
+import { createStore, StoreProvider } from "kiss-for-react";
 import State from "./State";
 
 const store = createStore<State>({ initialState: ... });

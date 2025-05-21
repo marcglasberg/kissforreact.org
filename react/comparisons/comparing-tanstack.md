@@ -209,7 +209,7 @@ class LoadText extends Action {
 Both TanStack Query and Kiss allow refetching stale data.
 TanStack Query has options like `refetchOnMount`, `refetchOnWindowFocus`, `refetchOnReconnect`,
 `refetchInterval`, and `refetchIntervalInBackground`, which are not yet present in Kiss but
-will be implemented [in the future](https://github.com/marcglasberg/kiss-state-react/issues/1).
+will be implemented [in the future](https://github.com/marcglasberg/kiss-for-react/issues/1).
 This is a possible API:
 
 ```tsx

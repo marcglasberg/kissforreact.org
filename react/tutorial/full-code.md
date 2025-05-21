@@ -6,10 +6,10 @@ sidebar_position: 11
 
 If you're interested in seeing the full code of _Todo List_ applications that are even
 more complete than the one we've built in this tutorial, you can check out these examples
-in [Kiss's GitHub repository](https://github.com/marcglasberg/kiss-state-react):
+in [Kiss's GitHub repository](https://github.com/marcglasberg/kiss-for-react):
 
-* [Todo List app for **React Web**](https://github.com/marcglasberg/kiss-state-react/tree/main/examples/todo-app-example)
-* [Todo List app for **React Native**](https://github.com/marcglasberg/kiss-state-react/tree/main/examples/TodoAppReactNative)
+* [Todo List app for **React Web**](https://github.com/marcglasberg/kiss-for-react/tree/main/examples/todo-app-example)
+* [Todo List app for **React Native**](https://github.com/marcglasberg/kiss-for-react/tree/main/examples/TodoAppReactNative)
 
 ## Tutorial code
 
@@ -40,11 +40,11 @@ root.render(
 import "./styles.css";
 import React from "react";
 import { useEffect, useState } from "react";
-import { Store, StoreProvider, KissAction } from "kiss-state-react";
-import { ShowUserException, ClassPersistor } from "kiss-state-react";
-import { useSelect, useStore, useIsWaiting } from "kiss-state-react";
-import { useIsFailed, useExceptionFor } from "kiss-state-react";
-import { useClearExceptionFor, UserException } from "kiss-state-react";
+import { Store, StoreProvider, KissAction } from "kiss-for-react";
+import { ShowUserException, ClassPersistor } from "kiss-for-react";
+import { useSelect, useStore, useIsWaiting } from "kiss-for-react";
+import { useIsFailed, useExceptionFor } from "kiss-for-react";
+import { useClearExceptionFor, UserException } from "kiss-for-react";
 import { State, TodoList, TodoItem, Filter } from "./State";
 
 // Allows the user to reload the page without losing the todo list.

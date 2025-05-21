@@ -551,7 +551,7 @@ as [previously discussed](../advanced-actions/base-action-with-common-logic).
 For example:
 
 ```tsx 
-import { KissAction } from 'kiss-state-react';
+import { KissAction } from 'kiss-for-react';
 import { State } from 'State';
 
 export abstract class Action extends KissAction<State> { 

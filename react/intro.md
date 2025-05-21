@@ -30,14 +30,14 @@ having been [available for Flutter](https://pub.dev/packages/async_redux) with a
 <TabItem value="npm" label="npm">
 
 ```npm
-npm install kiss-state-react
+npm install kiss-for-react
 ```
 
 </TabItem>
 <TabItem value="yarn" label="yarn">
 
 ```yarn
-yarn add kiss-state-react
+yarn add kiss-for-react
 ```
 
 </TabItem>

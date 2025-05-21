@@ -15,7 +15,7 @@ If you have any questions or feedback regarding **this Tutorial**, please feel
 free to [open an issue here](https://github.com/marcglasberg/kissforreact.org/issues).
 
 Or, if you have any questions or feedback regarding Kiss 
-itself, [open an issue here](https://github.com/marcglasberg/kiss-state-react/issues).
+itself, [open an issue here](https://github.com/marcglasberg/kiss-for-react/issues).
 
 <hr></hr>
 
