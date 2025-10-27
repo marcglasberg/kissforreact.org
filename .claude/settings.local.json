@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npm run generate:docs:*)",
+      "Bash(sed:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 10s npm run serve)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
