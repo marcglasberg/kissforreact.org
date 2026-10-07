@@ -33,11 +33,11 @@ and [`after()`](before-and-after-the-reducer#after).
 This is what happens if an action throws an error:
 
 * **Before**: If an action throws an error in its `before()` function, the reducer will not be
-  executed, will not return a new state, and the store state will **not** be modified.
+  executed, will not return a new state, and the store's state will **not** be modified.
 
 * **Reduce**: If an action throws an error in its `reduce()` function,
   the reducer will stop in its tracks before completing. It will not return a new state,
-  and the store state will **not** be modified.
+  and the store's state will **not** be modified.
 
 * **After**: The action's `after()` function will **always** be called, no matter if the other
   two functions threw errors or not. For this reason, if you need to clean up some action
@@ -383,11 +383,11 @@ As you can see, the error observer returns a boolean:
 ## UserExceptionAction
 
 As [previously discussed](../basics/user-exceptions), the `UserException` is a special type of error
-that Kiss automatically catches and shows to the user in a dialog, or other UI of your
+that Kiss automatically catches and shows to the user in a dialog or another UI element of your
 choice.
 
 For this to work, you must throw the `UserException` from inside an
-action's `before()` or `reduce()` functions. Only then, Kiss will be able to
+action's `before()` or `reduce()` functions. Only then will Kiss be able to
 catch the exception and show it to the user.
 
 However, if you are **not** inside an action, but you still want to show an error dialog to the

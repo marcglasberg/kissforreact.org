@@ -14,7 +14,7 @@ Testing an Kiss app generally involves these steps, in order:
 
 1. Set up the store and some initial state.
 2. Dispatch one or more actions.
-3. Wait for the actions to complete their dispatch, or for the store state to meet
+3. Wait for the actions to complete their dispatch, or for the store's state to meet
    a certain condition.
 4. Verify the current state, or the action status.
 

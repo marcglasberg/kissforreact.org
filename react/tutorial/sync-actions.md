@@ -122,7 +122,7 @@ message.
 Throwing a `UserException` from inside actions is ok. The app will not crash!
 Kiss will catch the exception and handle it properly:
 
-* The action will abort. The reducer will not return a new state, and the store state will not
+* The action will abort. The reducer will not return a new state, and the store's state will not
   be updated
 * A dialog will pop up with the error message, automatically
 * Components can later check an error occurred by writing `useIsFailed(AddTodoAction)`

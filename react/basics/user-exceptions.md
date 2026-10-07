@@ -73,7 +73,7 @@ class SaveUser extends Action {
 When an action causes a `UserException`, it automatically goes into a special error queue in the
 store. From there, an "error widget" can show these errors to the user, one at a time.
 
-Your Team Lead should set up the error widget once for everyone. Regular developers only need to
+Your team lead should set up the error widget once for everyone. Regular developers only need to
 throw `UserException`s in their daily work.
 
 You can decide how the error widget looks. It could be a dialog box with the error message, a toast

@@ -45,7 +45,7 @@ class SellAction extends Action {
       throw UserException('Please wait for the current order to complete.');
     }
     
-    // Only then, post the sell order to the backend
+    // Only then post the sell order to the backend
     let amount = await postSellOrder(this.stock);    
     
     return (state) => 

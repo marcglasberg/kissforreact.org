@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Dispatching actions
 
-As [previously discussed](./store-and-state#immutable-state), the store state is **immutable**.
+As [previously discussed](./store-and-state#immutable-state), the store's state is **immutable**.
 
 The only way to change the store **state** is by dispatching **actions**.
 The action reducer returns a new state, that replaces the old one.
@@ -84,7 +84,7 @@ expect(status.originalError).toBeInstanceOf(UserException);
 ## Dispatch and wait all
 
 Use `dispatchAndWaitAll` to dispatch the given actions in parallel, applying their reducers,
-and possibly changing the store state.
+and possibly changing the store's state.
 
 The actions may be sync or async. You'll get a `Promise` that resolves when **all** actions finish.
 In other words, it waits for the slowest action to finish.
@@ -141,7 +141,7 @@ class LoadTextAndIncrement extends Action {
     // Dispatch and wait for the action to finish   
     await this.dispatchAndWait(new LoadText());
     
-    // Only then, increment the state
+    // Only then increment the state
     return (state) => state.copy({count: state.count + 1});  
   }
 }

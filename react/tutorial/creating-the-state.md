@@ -11,7 +11,7 @@ Our Todo app state will be composed of 3 data structures, named as follows:
 
 * `TodoItem` represents a single todo item
 * `TodoList` represents a list of `TodoItem`s
-* `State` is the store state, which contain the `TodoList`
+* `State` is the store's state, which contain the `TodoList`
 
 These can be plain JavaScript objects, but also ES6 classes.
 
@@ -137,7 +137,7 @@ like [Immer](https://www.npmjs.com/package/immer).
 
 ## State
 
-Finally, we need to define the store state. In the future, we may want to add a lot of
+Finally, we need to define the store's state. In the future, we may want to add a lot of
 different things to the state, but for now we'll keep it simple
 and just add the `TodoList` to it:
 

@@ -126,7 +126,7 @@ Note the reducer has direct access to the `value` parameter through `this.value`
 The simplest type of action is _synchronous_, meaning it doesn't involve any asynchronous operation.
 We can know an action is sync by looking at its reducer, which is declared with `reduce()`.
 
-However, action can download information from the internet, or do any other async work.
+However, actions can fetch data from the internet or do any other async work.
 To make an action async, declared it with `async reduce()` and then returns a `Promise`.
 
 Also, instead of returning the new state directly, you should return a **function** that
@@ -150,7 +150,7 @@ class AddRandomText extends Action {
 
 ## Actions can throw errors
 
-If something bad happens, your action can simply **throw an error**.
+If an error occurs, your action can simply **throw it**.
 In this case, the state will not change.
 
 Let's modify the previous `AddRandomText` action to throw an error if the fetch fails:
@@ -178,8 +178,8 @@ Notes:
   More on that, later.
 
 * Actions can throw any type of errors. However, if they throw a `UserException`
-  (provided by Kiss), a dialog or other UI will open automatically,
-  showing the error message to the user.
+  (provided by Kiss), a dialog or another UI element opens automatically
+  and shows the error message to the user.
 
 <hr></hr>
 

@@ -67,7 +67,7 @@ console.log(store.actionsInProgress());
 Function `Store.describeStateChange(obj1, obj2)` returns a string
 describing only the differences between two given objects.
 
-If you take a snapshot of the store state in different moments,   
+If you take a snapshot of the store's state in different moments,   
 you can use this function to print the differences between them to the console.
 For example:
 

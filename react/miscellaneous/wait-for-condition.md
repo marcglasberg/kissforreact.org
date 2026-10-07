@@ -5,8 +5,8 @@ sidebar_position: 3
 # Wait for condition
 
 Kiss comes with a few functions to help you wait until some condition is met.
-You can create conditions that wait until the store state is in a certain way,
-or until actions in progress are in a certain way.
+You can create conditions that wait until the store's state meets a condition,
+or until certain actions are no longer in progress.
 
 * [waitCondition](#waitcondition) waits until the state is in a condition.
 * [waitAllActions](#waitallactions) waits until actions are not in progress.
@@ -20,7 +20,7 @@ or until actions in progress are in a certain way.
 
 ## waitCondition
 
-You can use the `waitCondition` function to wait until the app state changes in a certain way.
+You can use the `waitCondition` function to wait until the app state meets a condition.
 In more detail, you get a promise which will resolve when a given state condition is true.
 
 For example, suppose your state contains a `stocks` object that allows you to get the
@@ -52,7 +52,7 @@ class SellStockForPrice extends Action {
       (state) => state.stocks.getPrice(this.stock) >= this.price
     );
     
-    // Only then, post the sell order to the backend
+    // Only then post the sell order to the backend
     let amount = await postSellOrder(this.stock);    
     
     return (state) => 
@@ -76,7 +76,7 @@ the promise resolves immediately.
 ### dispatchWhen
 
 The special dispatch function `dispatchWhen` allows you to
-wait until the store state meets a certain condition, and then dispatch an action.
+wait until the store's state meets a certain condition, and then dispatch an action.
 For example, this will dispatch a `BuyStock` action when the price of IBM is 100 or more:
 
 ```ts

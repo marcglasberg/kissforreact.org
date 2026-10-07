@@ -97,7 +97,7 @@ abstract class Action extends KissAction<State> {
 }
 ```
 
-And then your actions have an easier time accessing the store state:
+And then your actions have an easier time accessing the store's state:
 
 ```ts
 class SelectItem extends Action {

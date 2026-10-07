@@ -16,7 +16,7 @@ You can add **features** to your actions, to accomplish common tasks:
 
 ## nonReentrant
 
-To prevent an action from being dispatched while it's already running,
+To prevent an action from running again while it is already running,
 add `nonReentrant = true` to your action.
 
 ```tsx
@@ -29,7 +29,7 @@ class LoadText extends Action {
 
 ## retry
 
-To retry an action a few times with exponential backoff, if it fails,
+To retry an action a few times with exponential backoff if it fails,
 add the `retry` property to your action class.
 
 ```tsx
@@ -60,10 +60,10 @@ You can change one or more of the default values.
 class LoadText extends Action {
 
   retry = {
-    initialDelay: 350, // Millisecond delay before the first attempt
-    maxRetries: 3,     // Number of retries before giving up
-    multiplier: 2,     // Delay increase factor for each retry
-    maxDelay: 5000,    // Max millisecond delay between retries
+    initialDelay: 350, // Delay in milliseconds before the first retry
+    maxRetries: 3,     // Number of retries before stopping
+    multiplier: 2,     // Factor used to increase the delay after each retry
+    maxDelay: 5000,    // Maximum delay between retries, in milliseconds
   }
    
   reduce() { ... }
@@ -167,12 +167,12 @@ export abstract class Action extends KissAction<State> {
 
 ## debounce
 
-To limit how often an action occurs in response to rapid inputs,
+To limit how often an action runs in response to rapid input,
 add something like `debounce = 300` to your action class,
 where `300` is the number of milliseconds.
 
-For example, when a user types in a search bar, debouncing ensures that not every keystroke
-triggers a server request. Instead, it waits until the user pauses typing before acting.
+For example, when a user types into a search bar, debouncing ensures that not every keystroke
+triggers a server request. Instead, the action waits until the user stops typing for a short time before running.
 
 ```tsx
 class SearchText extends Action {
@@ -293,12 +293,10 @@ If you try to use both at the same time, an error will be thrown.
 
 ## optimisticUpdate
 
-To provide instant feedback on actions that save information to the server,
-this feature immediately applies state changes as if they were already successful,
-before confirming with the server.
+To provide instant feedback when an action saves data to the server, you can use an optimistic update.
+This feature changes the state immediately, before the server confirms that the update succeeded.
 
-If the server update fails, the change is rolled back and, optionally,
-a notification can inform the user of the issue.
+If the server update fails, the state is changed back. You can also show a notification to the user.
 
 ```tsx
 class SaveName extends Action {  

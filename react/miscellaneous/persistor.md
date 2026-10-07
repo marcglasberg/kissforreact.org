@@ -7,7 +7,7 @@ import TabItem from '@theme/TabItem';
 
 # Persistor
 
-The **persistor** allows you to save the store state to the local device disk.
+The **persistor** allows you to save the store's state to the local device disk.
 
 - In the **web**, it allows the user to reload the page,
   or close the browser and reopen it later, without losing the previous state.

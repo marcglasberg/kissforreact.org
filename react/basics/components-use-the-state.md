@@ -11,7 +11,7 @@ provided by Kiss.
 ## useAllState
 
 The `useAllState` hook lets you access the state from any component.
-The component will then rebuild whenever the state changes:
+The component will then re-render whenever the state changes:
 
 ```tsx
 function MyComponent() { 
@@ -21,7 +21,7 @@ function MyComponent() {
 };
 ```
 
-The problem with `useAllState` is that it rebuilds the component 
+The problem with `useAllState` is that it re-renders the component 
 every time anything in the state changes,
 even if the component doesn't use the part of the state that changed.
 
@@ -30,7 +30,7 @@ even if the component doesn't use the part of the state that changed.
 The `useSelect` hook (which can also be written as `useSelector`)
 selects only the part of the state that your component needs.
 
-It will rebuild only when that part changes:
+The component re-renders only when that part changes:
 
 ```tsx
 function MyComponent() { 
@@ -45,7 +45,7 @@ In other words, it is more efficient, but also a little more verbose to use.
 
 ## useObject
 
-Finally, the `useObject` hook is another alternative that only rebuilds when needed:
+Finally, the `useObject` hook is another alternative that causes the component to re-render only when needed:
 
 ```tsx
 function MyComponent() {
@@ -59,7 +59,7 @@ function MyComponent() {
 };
 ```
 
-The component will now rebuild only when the internal properties of the selected object change.
+The component will now re-render only when the internal properties of the selected object change.
 In other words, when at least one of `name` or `age` changes.
 
 ## Try it out
@@ -74,4 +74,4 @@ sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-ori
 <hr></hr>
 
 Next, let's see how to define actions and reducers,
-that allows us to change the store state.
+that allows us to change the store's state.
