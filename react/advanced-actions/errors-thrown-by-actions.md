@@ -357,7 +357,7 @@ const store = createStore<State>(
   errorObserver: errorObserver,
 );
 
-function errorObserver(error: any, action: Action, store: Store<State>) {
+function errorObserver(error: any, action: Action | null, store: Store<State>) {
 
    // In development and tests, we throw the error so that we can 
    // see it in the emulator/console. We also always let UserExceptions 
@@ -379,6 +379,10 @@ As you can see, the error observer returns a boolean:
 
 * If it returns `false`, the error is considered dealt with, and will be "swallowed" (not rethrown).
   This is usually what we want to do in production, after logging the error.
+
+The `errorObserver` is also given the errors of the [persistor](../miscellaneous/persistor#persistence-errors).
+For those errors, the `action` is `null`. Since there is no `dispatch` call to throw them to,
+returning `true` logs them with `Store.log()`, and returning `false` ignores them.
 
 ## UserExceptionAction
 

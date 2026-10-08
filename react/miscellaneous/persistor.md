@@ -26,14 +26,51 @@ const store = createStore<State>({
 });        
 ```
 
+Don't read the saved state yourself. Kiss reads it for you, once, when the store is created.
+Reading takes some time, so the store starts with the `initialState`, and then the saved state
+replaces it as soon as it's loaded.
+
+## Waiting for the store to be ready
+
+Your UI can use the `initialState` while the saved state loads.
+For example, if some information is missing from the initial state,
+the UI can show a loading indicator in its place.
+
+However, **any state changes made before the saved state is loaded may be overwritten by it.**
+For this reason, use `await store.ready()` to wait until the store has loaded the saved state,
+and only then dispatch the actions that start your app:
+
+```tsx
+const store = createStore<State>({
+  initialState: State.initialState,
+  persistor: persistor,
+});
+
+await store.ready();
+store.dispatch(new InitAppAction());
+```
+
+A few things to know about `store.ready()`:
+
+* It never fails. If reading the saved state fails, the error is reported
+  (see [Persistence errors](#persistence-errors)) and the store keeps the initial state.
+
+* You can call it as many times as you want, from different places.
+  It doesn't read the saved state again.
+
+* If the store has no persistor, it's ready right away.
+
+* In the future, other things the store needs to do at startup may also be waited for here.
+
 Let's first see how to implement your own persistor,
 and then let's see how to use the `ClassPersistor` that comes out of the box with Kiss.
 
 ## Implementation
 
-All a persistor needs to do is to implement the abstract `Persistor` interface.
-This interface is shown below, with its four functions that must be
-implemented: `readState`, `deleteState`, `persistDifference` and `saveInitialState`.
+All a persistor needs to do is to extend the abstract `Persistor` class.
+This class is shown below, with its three functions that must be
+implemented: `readState`, `deleteState` and `persistDifference`.
+You may also override `saveInitialState`, `throttle` and `wrapError`.
 
 Read the comments in the code below to understand what each function should do.
 
@@ -58,7 +95,9 @@ export abstract class Persistor<St> {
   //   should thrown an error, with an appropriate error message.
   //
   // Note: If an error is thrown by `readState`, Kiss will log  
-  // it with `Store.log()`. 
+  // it with `Store.log()`, and give it to the store's `errorObserver` 
+  // (with a `null` action). The saved state is then deleted, and the
+  // initial-state is saved instead.
   abstract readState(): Promise<St | null>;
 
   // Function `deleteState` should delete/remove the saved state from 
@@ -77,6 +116,9 @@ export abstract class Persistor<St> {
   // and persist only the difference between them. The last persisted state 
   // is provided to the function as a parameter called `lastPersistedState`. 
   // It may be `null` if there is no persisted state yet (first app run).  
+  //
+  // If this function throws an error, the `newState` is NOT considered 
+  // persisted. See "Persistence errors" below.
   abstract persistDifference(
     lastPersistedState: St | null,
     newState: St
@@ -84,13 +126,26 @@ export abstract class Persistor<St> {
 
   // Function `saveInitialState` should save the given `state` to the 
   // persistence, replacing any previous state that was saved.  
-  abstract saveInitialState(state: St): Promise<void>;
+  // By default, it calls `persistDifference(null, state)`.
+  saveInitialState(state: St): Promise<void> {
+    return this.persistDifference(null, state);
+  }
 
   // The default throttle is 2 seconds (2000 milliseconds). 
   // Return `null` to turn off the throttle.   
   get throttle(): number | null {
     return 2000; 
   }
+
+  // Processes the errors thrown by `persistDifference`. 
+  // Return the error, a different error, or `null` to ignore it.
+  // See "Persistence errors" below.
+  wrapError(error: any): any {
+    return error;
+  }
+
+  // Reports an error without throwing it. See "Persistence errors" below.
+  addError(error: any): void { ... }
 }
 ```
 
@@ -106,7 +161,8 @@ Kiss will call these functions at the right time, so you don't need to worry abo
   and then `saveInitialState()` will be called to persist the initial state.
 
 * In case the persisted state read with `readState()` is valid, this will become the current store
-  state.
+  state. At this point, `store.ready()` resolves (it also resolves in the other cases above,
+  after the initial state is saved).
 
 * From this moment on, every time the state changes, Kiss will schedule a call to
   the `persistDifference()` function. This function will not be called more than once each 2
@@ -125,6 +181,63 @@ Kiss will call these functions at the right time, so you don't need to worry abo
   for some reason. You can do that by dispatching the built-in `PersistAction`
   with `dispatch(new PersistAction());`. This will ignore the throttle period and
   call `persistDifference()` right away to save the current state.
+
+## Persistence errors
+
+Saving the state may fail. For example, the disk may be full, or the storage may not be
+available. Kiss never lets these errors crash your app. Instead:
+
+* If `persistDifference()` throws an error, the state it was trying to save is **not**
+  considered saved. Kiss doesn't retry the save by itself, but the next time the state changes,
+  `persistDifference()` is called again with the newest state. Its `lastPersistedState`
+  parameter will be the last state that was **really** saved, so persistors that save only the
+  difference keep working.
+
+* The error is first given to the persistor's `wrapError()` function, which you can override.
+  You can return the error unchanged, return a different error, or return `null` to ignore it.
+  For example, you can turn storage errors into a `UserException`, so that the user is told
+  about them:
+
+  ```ts
+  wrapError(error: any) {
+    return (error instanceof StorageError)
+      ? new UserException('Could not save your data.', { hardCause: error })
+      : error;
+  }
+  ```
+
+* Then, if the error is a `UserException`, it's shown to the user, just like a
+  `UserException` thrown by an action.
+
+* Finally, the error is given to the store's
+  [errorObserver](../advanced-actions/errors-thrown-by-actions#error-observer),
+  with a `null` action. Since there is no `dispatch` call to throw the error to,
+  returning `true` logs the error with `Store.log()`, and returning `false` ignores it.
+  If you didn't define an `errorObserver`, errors that are not `UserException`s are logged
+  with `Store.log()`.
+
+Errors thrown by `readState()` when the app starts, and by the `deleteState()` and
+`saveInitialState()` that follow it, also go to the `errorObserver` (they don't go through
+`wrapError()`).
+
+Sometimes your persistor can deal with a problem by itself, but you still want to let
+the user know about it. In this case, don't throw. Instead, report the error with `addError()`.
+For example, if the saved state is corrupted and you reset it:
+
+```ts
+async readState(): Promise<State | null> {
+  try {
+    return await this.read();
+  } catch (error) {
+    await this.deleteState();
+    this.addError(new UserException('Could not read your data, so it was reset.'));
+    return null;
+  }
+}
+```
+
+Errors added with `addError()` are treated like the errors above,
+but they don't go through `wrapError()`.
 
 ## ClassPersistor
 
@@ -236,6 +349,118 @@ title="counter-async-redux-example"
 sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
 />
 
+### Class names and minification
+
+The `ClassPersistor` saves each object together with the name of its class,
+and uses that name to recreate the object when the state is read back.
+
+However, production builds usually **minify** class names.
+For example, `TodoItem` may become `e`.
+If that happens, different classes may end up with the same name,
+and the names may change from one version of your app to the next,
+so the saved state can't be read back correctly.
+
+To protect you, the `ClassPersistor` checks this when it's created.
+If class names are being minified, and some class in `classesToSerialize`
+has no `typeName` (see below), it throws a `StoreException`.
+It also throws if two different classes would be saved under the same name.
+Note this can only happen in production builds, since development builds are not minified,
+so make sure to test a production build of your app before releasing it.
+
+There are two ways to fix this. You can use either one, or both.
+
+**Option 1: Give your state classes a `typeName`**
+
+Add a static `typeName` to each class in `classesToSerialize`.
+When present, it's used instead of the class name, and it's not affected by minification:
+
+```tsx
+class TodoItem {
+  static readonly typeName = 'TodoItem';
+  ...
+}
+```
+
+This works with any bundler, and also lets you rename a class later
+without breaking the state saved by older versions of your app:
+just keep the same `typeName`.
+
+Note a `typeName` is **not inherited**. If a class extends another class,
+it must declare its own `typeName`.
+
+**Option 2: Turn off class name minification**
+
+Tell your bundler's minifier to keep class names. The rest of your code is still minified.
+For example:
+
+<Tabs>
+<TabItem value="webpack" label="Webpack (Terser)">
+
+```js
+// webpack.config.js
+const TerserPlugin = require('terser-webpack-plugin');
+
+module.exports = {
+  optimization: {
+    minimizer: [new TerserPlugin({ terserOptions: { keep_classnames: true } })],
+  },
+};
+```
+
+</TabItem>
+<TabItem value="vite" label="Vite 8+">
+
+```js
+// vite.config.js
+export default {
+  build: {
+    rolldownOptions: {
+      output: { minify: { mangle: { keepNames: true } } },
+    },
+  },
+};
+```
+
+</TabItem>
+<TabItem value="vite7" label="Vite 7 and older">
+
+```js
+// vite.config.js
+export default {
+  esbuild: { keepNames: true },
+};
+```
+
+</TabItem>
+<TabItem value="metro" label="React Native (Metro)">
+
+```js
+// metro.config.js
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const defaultConfig = getDefaultConfig(__dirname);
+
+module.exports = mergeConfig(defaultConfig, {
+  transformer: {
+    minifierConfig: {
+      ...defaultConfig.transformer.minifierConfig,
+      keep_classnames: true,
+      // Needed because React Native's Babel preset turns classes into functions.
+      keep_fnames: true,
+    },
+  },
+});
+```
+
+</TabItem>
+</Tabs>
+
+The exact option depends on your bundler and its version,
+so check its documentation if the above doesn't apply to you.
+
+**Next.js** has no setting to keep only class names, so we recommend option 1.
+The only way to keep them is `next build --no-mangling`, which turns off the minification
+of **all** names, not only class names, and makes your JavaScript considerably larger.
+
 ## App lifecycle
 
 In mobile apps, you have to understand the app lifecycle to use the persistor correctly:
@@ -274,7 +499,7 @@ state to its initial-state.
 
 You may be temped to write `dispatch(new UpdateStateAction((state: State) => initialState));`
 but that's not so simple. The persistor may be waiting for the throttle period, some async
-actions may still be running, etc. Thankfully, Kiss provides you with a `store.signOut()`
+actions may still be running, etc. Thankfully, Kiss provides you with a `store.logOut()`
 function that you can call to perform this process safely.
 
 This is how you can do it:
@@ -282,16 +507,16 @@ This is how you can do it:
 ```ts
 await store.logOut({
   initialState: State.initialState,
-  throttle = 3000,
-  actionsThrottle = 6000,
-})
+  throttle: 3000,
+  actionsThrottle: 6000,
+});
 ```  
 
 When this function returns, your initial store state will be restored to its initial state.
 
 Defining `throttle` and `actionsThrottle` above is optional, because
 the default `throttle` is 3 seconds, and the default `actionsThrottle` is 6 seconds.
-This is how `signOut()` uses them:
+This is how `logOut()` uses them:
 
 - Waits for `throttle` milliseconds to make sure all async processes that the app may
   have started have time to finish.
