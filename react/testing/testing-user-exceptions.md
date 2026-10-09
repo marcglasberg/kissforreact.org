@@ -43,12 +43,12 @@ a copy of its status.
 Here's an example:
 
 ```ts
-let status = await store.dispatchAndWait(MyAction());
+let status = await store.dispatchAndWait(new MyAction());
 expect(status.isCompletedFailed).toBe(true);
 
 let error = status.wrappedError; 
 expect(error).toBeInstanceOf(UserException);
-expect(error.msg).toBe("You can't do this.");
+expect(error.message).toBe("You can't do this.");
 ```
 
 ## Checking the error queue
@@ -71,9 +71,9 @@ let status = await store.dispatchAndWaitAll([
 let errors = store.userExceptionsQueue;
 
 expect(errors.length).toBe(3);
-expect(errors[0].msg).toBe("You can't do this.");
-expect(errors[1].msg).toBe("You can't do that.");
-expect(errors[2].msg).toBe("You can't do the other thing.");
+expect(errors[0].message).toBe("You can't do this.");
+expect(errors[1].message).toBe("You can't do that.");
+expect(errors[2].message).toBe("You can't do the other thing.");
 ```
 
  

@@ -38,7 +38,7 @@ class Increment extends KissAction<number> {
 
 To create a component that shows the counter in the screen,
 we use the `useAllState` hook. This hooks returns the whole state,
-which here is the counter value itself: `const counter = useAllState()`.
+which here is the counter value itself: `const counter = useAllState<number>()`.
 
 We also need a second hook called `useStore`, which gives us a reference to the store
 with `const store = useStore()`. This is necessary because when the user clicks
@@ -99,7 +99,7 @@ To show the counter in the screen we could still use the `useAllState` hook,
 which returns the whole state, and then just get the counter value:
 
 ```tsx
-const state = useAllState();
+const state = useAllState<State>();
 const counter = state.counter;
 ```
 
@@ -110,7 +110,7 @@ If we use the `useSelect` hook to "select" just the counter, the component will 
 when the counter changes, even when later we add more information to the state.
 
 ```tsx
-const counter = useSelect((state) => state.counter);
+const counter = useSelect((state: State) => state.counter);
 ```
 
 In other words, this is an optimization which will prevent unnecessary re-renders when the parts
@@ -165,7 +165,7 @@ We'll use the `useSelect` hook to "select" just the counter, so that the compone
 re-render when the counter changes, even when later we add more information to the state.
 
 ```tsx
-const counter = useSelect((state) => state.counter);
+const counter = useSelect((state: State) => state.counter);
 ```
 
 In other words, this is an optimization which will prevent unnecessary re-renders when the parts
@@ -389,12 +389,12 @@ For example, this is how I would test the `Add` action, just to make sure it's w
 function.
 
 ```tsx
-import { Store } from 'path-to-your-store-file';
+import { createStore, Store } from 'kiss-for-react';
 import { State } from 'path-to-your-state-file';
 import { Add } from 'path-to-your-action-file';
 
 describe('Add action', () => {
-  let store;
+  let store: Store<State>;
 
   beforeEach(() => {
     store = createStore<State>({ initialState: new State(3) });
@@ -441,7 +441,7 @@ This is the result:
 class Increment extends Action {
   async reduce() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return (state) => this.state.add(1);
+    return (state: State) => state.add(1);
   }
 }
 ```

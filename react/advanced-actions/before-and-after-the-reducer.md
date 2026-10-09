@@ -133,7 +133,7 @@ class Increment extends Action {
 
   async reduce() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return (state: State) => this.state.increment();
+    return (state: State) => state.increment();
   }
 
   before() { this.dispatch(new BarrierAction(true)); }
@@ -174,7 +174,7 @@ class Increment extends Action {
   
   async reduce() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return (state: State) => this.state.increment();
+    return (state: State) => state.increment();
   }
 }
 ```

@@ -33,7 +33,7 @@ class AddRandomTodoAction extends Action {
     let jsonResponse = await response.json();
     let text = jsonResponse[0].todo;
      
-    return (state) => state.withTodoList(this.state.todoList.addTodoFromText(text));
+    return (state: State) => state.withTodoList(state.todoList.addTodoFromText(text));
   }
 } 
 ``` 
@@ -45,7 +45,7 @@ Another difference is that now we are **not** returning the new state directly.
 Instead, we are returning a **function** that receives the current state and returns the new state:
 
 ```tsx
-return (state) => state.withTodoList(this.state.todoList.addTodoFromText(text)); 
+return (state: State) => state.withTodoList(state.todoList.addTodoFromText(text)); 
 ``` 
 
 This is necessary when the action is asynchronous, because of the way Promises work in JavaScript.

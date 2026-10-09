@@ -174,8 +174,8 @@ class Decrement extends Action {
     constructor(readonly userId: number) { super(); }
       
     async reduce() {
-      const response = await userAPI.fetchById(userId)
-      return state.entities.withAdded(response.data); 
+      const response = await userAPI.fetchById(this.userId)
+      return (state: State) => state.withEntities([...state.entities, response.data]); 
     }
   }
   ```
@@ -210,12 +210,12 @@ class Decrement extends Action {
   ```ts title="Kiss"
   let isLoading = useIsWaiting(SomeAction);
   let isFailed = useIsFailed(SomeAction);
-  let errorText = useExceptionFor(SomeAction).errorText;
+  let errorText = useExceptionFor(SomeAction)?.errorText ?? '';
 
   <div>
     <button
         onClick={() => store.dispatch(new SomeAction())}
-        disabled={isLoading}
+        disabled={isLoading}>
         { isLoading ? 'Loading...' : 'Do Something' }
     </button>
     {isFailed && <div>{errorText}</div>}
@@ -238,10 +238,10 @@ testing it is as simple as this:
 
 ```ts
 // Start with some IBM stocks
-var store = Store<State>(initialState: State(portfolio: ['IBM']));
+var store = new Store<State>({ initialState: new State({ portfolio: ['IBM'] }) });
 
 // Buy Tesla stocks  
-await dispatchAndWait(new BuyAction('TSLA'));  
+await store.dispatchAndWait(new BuyAction('TSLA'));  
 
 // Assert we now have IBM and Tesla
 expect(store.state.portfolio).toEqual(['IBM', 'TSLA']);

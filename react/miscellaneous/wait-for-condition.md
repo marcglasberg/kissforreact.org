@@ -35,7 +35,8 @@ This is how you can do it:
 
 ```tsx
 await waitCondition(
-  (state) => state.stocks.getPrice('IBM') >= 100
+  (state) => state.stocks.getPrice('IBM') >= 100,
+  { timeoutMillis: 0 }, // No timeout.
 );
 ```
 
@@ -49,13 +50,14 @@ class SellStockForPrice extends Action {
   
     // Wait until the stock price is higher than the limit price
     await this.waitCondition(
-      (state) => state.stocks.getPrice(this.stock) >= this.price
+      (state) => state.stocks.getPrice(this.stock) >= this.price,
+      { timeoutMillis: 0 }, // No timeout.
     );
     
     // Only then post the sell order to the backend
     let amount = await postSellOrder(this.stock);    
     
-    return (state) => 
+    return (state: State) => 
       state.copy({
         stocks: state.stocks.setAmount(this.stock, amount)
       });
@@ -63,8 +65,18 @@ class SellStockForPrice extends Action {
 }
 ```
 
-Keep in mind you should probably avoid waiting for conditions that may take a very long time to
-complete, as checking the condition is an overhead to every state change.
+:::warning
+
+While it waits, the condition runs on **every** state change.
+A few short-lived waits are fine.
+But many waits, or waits that may never complete (especially with no timeout),
+add a cost to every state change for as long as the store lives,
+since there is no way to cancel a wait.
+
+In production code, it's often better to put the logic in an action,
+or to react to the selected state in your components.
+
+:::
 
 :::info
 
@@ -72,6 +84,53 @@ If the condition is already true when the `waitCondition` function is called,
 the promise resolves immediately.
 
 :::
+
+### Timeout
+
+You must always say how long `waitCondition` should wait, with the `timeoutMillis` parameter.
+There is no default, because the right timeout depends on what you are waiting for.
+In the example above, the price may take days to reach 100, so it makes sense to wait with no timeout.
+But in a test, you'll want a short timeout, so that the test fails instead of hanging.
+
+For example, this times out after 1 second (1000 milliseconds):
+
+```ts
+let action = await store.waitCondition(
+  (state) => state.name == "Bill",
+  { timeoutMillis: 1000 },
+);
+```
+
+If the condition is not met in time, the promise rejects with a `TimeoutException`,
+and the condition stops being checked. You can catch it:
+
+```ts
+try {
+  await store.waitCondition((state) => state.name == "Bill", { timeoutMillis: 1000 });
+} catch (error) {
+  if (error instanceof TimeoutException) { /* Timed out. */ }
+  else throw error;
+}
+```
+
+Or, you can pass an `onTimeout` callback.
+If the timeout expires, `onTimeout` is called,
+and the promise resolves with `null`, instead of rejecting:
+
+```ts
+let action = await store.waitCondition(
+  (state) => state.name == "Bill",
+  { timeoutMillis: 1000, onTimeout: () => console.log('Timed out.') },
+);
+```
+
+If `onTimeout` throws an error, the promise rejects with that error.
+
+To wait with **no timeout**, pass `{ timeoutMillis: 0 }` (or `-1`):
+
+```ts
+await store.waitCondition((state) => state.name == "Bill", { timeoutMillis: 0 });
+```
 
 ### dispatchWhen
 
@@ -83,14 +142,51 @@ For example, this will dispatch a `BuyStock` action when the price of IBM is 100
 dispatchWhen(
   new BuyStock('IBM'),
   (state) => state.stocks.getPrice('IBM') >= 100,
+  { timeoutMillis: 0 }, // No timeout.
 );
 ```
 
-Note this dispatch function is just a shorthand for:
+Like `waitCondition`, you must always give a `timeoutMillis`.
+If the condition is not met in time,
+the action is **not** dispatched, and the condition stops being checked.
+You can use `onTimeout` to decide what happens in that case:
 
 ```ts
-waitCondition(condition).then(() => this.dispatch(action));
+dispatchWhen(
+  new BuyStock('IBM'),
+  (state) => state.stocks.getPrice('IBM') >= 100,
+  {
+    timeoutMillis: 60 * 1000, // 1 minute.
+    onTimeout: () => dispatch(new ShowMessage('IBM did not reach 100.')),
+  },
+);
 ```
+
+If you don't provide `onTimeout`, the timeout is simply logged.
+
+You can use `dispatchWhen` from anywhere:
+
+* With the store: `store.dispatchWhen(...)`
+* Inside actions: `this.dispatchWhen(...)`
+* In components: with the `useDispatchWhen` hook, or with `useStore().dispatchWhen(...)`
+
+```tsx
+function BuyWhenCheap() {
+  const dispatchWhen = useDispatchWhen();
+
+  return (
+    <Button onClick={() => dispatchWhen(
+      new BuyStock('IBM'),
+      (state) => state.stocks.getPrice('IBM') <= 90,
+      { timeoutMillis: 0 }, // No timeout.
+    )}>
+      Buy IBM when it's 90 or less
+    </Button>
+  );
+};
+```
+
+Note the wait is **not** cancelled when the component unmounts.
 
 ### In tests
 
@@ -106,8 +202,8 @@ const store = new Store<State>({ initialState: new State() });
 expect(store.state.user.isLoggedIn).toBe(false);
 
 dispatch(new LogInUser("Mary"));
-await store.waitCondition((state) => state.user.isLoggedIn);
-expect(store.state.user.name, "Mary");
+await store.waitCondition((state) => state.user.isLoggedIn, { timeoutMillis: 1000 });
+expect(store.state.user.name).toBe("Mary");
 ```
 
 Another useful fact is that the `waitCondition` function
@@ -118,31 +214,16 @@ the specific action that caused the state change:
 
 ```ts
 let action = await store.waitCondition(
-  (state) => state.name == "Bill"
+  (state) => state.name == "Bill",
+  { timeoutMillis: 1000 },
 );
-  
+
 expect(action instanceof ChangeNameAction).toBe(true);
 ```
 
-:::tip
-
-What happens if the condition is never met, and your test never finishes?
-To prevent that, you can set the `timeoutMillis` parameter.
-For example, this would time out after 1 second (1000 milliseconds):
-
-```ts
-let action = await store.waitCondition(
-  (state) => state.name == "Bill",
-  1000,
-);
-```
-
-The default timeout is 10 minutes, but you can
-modify `TimeoutException.defaultTimeoutMillis` to change this default globally.
-
-To disable the timeout completely, make it `0` or `-1`.
-
-:::
+In tests, use a short `timeoutMillis`, shorter than your test runner's own timeout
+(5 seconds by default in Jest and Vitest). This way, if the condition is never met,
+the test fails with a clear `TimeoutException`, instead of a generic test timeout.
 
 ## waitAllActions
 
@@ -276,14 +357,17 @@ expect(store.state.portfolio).toEqual(['TSLA']);
 
 The `waitActionType` function is very similar to the above `waitAllActionTypes`,
 but it waits for a single action type.
+Note it does **not** wait for an action of the given type to be dispatched.
+To do that, use [waitAnyActionTypeFinishes](#waitanyactiontypefinishes).
 The important difference is that it returns the action that caused the condition to be met.
 You can use this returned action to check its `status`, for example, to assert it failed:
 
 ```ts
-var action = await store.waitActionType(MyAction);
-expect(action.status.isCompleteOk).toBe(false);
-expect(action.status.isCompleteFailed).toBe(true);
-expect(action.status.originalError, isA<UserException>());
+dispatch(new MyAction());
+let action = await store.waitActionType(MyAction);
+expect(action.status.isCompletedOk).toBe(false);
+expect(action.status.isCompletedFailed).toBe(true);
+expect(action.status.originalError).toBeInstanceOf(UserException);
 ```
 
 ## waitAnyActionTypeFinishes
@@ -303,8 +387,8 @@ to run and then eventually dispatches an action called `MyFinalAction`.
 In this case, you can use `waitAnyActionTypeFinishes` to wait for `MyFinalAction` to
 eventually dispatch and finish:
 
-```dart
-dispatch(StartAction());
+```ts
+dispatch(new StartAction());
 await store.waitAnyActionTypeFinishes([MyFinalAction]);
 ```
 
@@ -312,12 +396,12 @@ This function also returns the action that completed the promise,
 which you can use to check its `status`.
 For example, if you want to assert that `MyFinalAction` failed by throwing a `UserException`:
 
-```dart
-dispatch(StartAction());
+```ts
+dispatch(new StartAction());
 let action = await store.waitAnyActionTypeFinishes([MyFinalAction]);
-expect(action.status.isCompleteOk).toBe(false);
-expect(action.status.isCompleteFailed).toBe(true);
-expect(action.status.originalError).toBeInstanceOf(UserException>);
+expect(action.status.isCompletedOk).toBe(false);
+expect(action.status.isCompletedFailed).toBe(true);
+expect(action.status.originalError).toBeInstanceOf(UserException);
 ```
 
 ## waitActionCondition
@@ -328,7 +412,7 @@ The condition function should return `true` when the condition is met, and `fals
 
 ```ts
 await store.waitActionCondition(
-  (actionsInProgress, triggerAction) => { // Return true or false }
+  (actionsInProgress, triggerAction) => { /* Return true or false */ }
 );
 ```
 
@@ -361,5 +445,15 @@ Most wait functions above accept these optional parameters:
   Otherwise, the promise will complete immediately and throw no errors.
 
 * The `timeoutMillis` sets the maximum time to wait for the condition to be met.
-  By default, it's 10 minutes. To disable it, make it `0` or `-1`.
-  If you want, you can modify `TimeoutException.defaultTimeoutMillis` to change the default.
+  If it's not met in time, the promise rejects with a `TimeoutException`.
+  By default, it's 3 seconds, which is shorter than the default test timeout of Jest and Vitest
+  (5 seconds). This way, a wait that never completes fails the test with a clear `TimeoutException`.
+  If your tests are slower, you can change this default globally,
+  for example: `TimeoutException.defaultTimeoutMillis = 10_000`.
+  To wait with **no timeout**, make it `0` or `-1`. For example: `{ timeoutMillis: 0 }`.
+  (Note `waitCondition` and `dispatchWhen` have no default timeout. You must always give one.)
+
+* The `onTimeout` callback is called if the timeout expires.
+  When you provide it, the promise resolves instead of rejecting with a `TimeoutException`.
+  In this case, there is no trigger action, so the functions that return one return `null`.
+  If `onTimeout` throws an error, the promise rejects with that error.

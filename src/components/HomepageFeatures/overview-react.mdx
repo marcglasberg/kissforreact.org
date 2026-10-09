@@ -55,7 +55,7 @@ The component re-renders when the state changes.
 
 ```tsx
 function MyComponent() { 
-  const state = useAllState();   
+  const state = useAllState<State>();   
   
   return <div>{state.name} is {state.age} years old</div>;    
 };
@@ -68,8 +68,8 @@ The component re-renders only when that part changes.
 
 ```tsx
 function MyComponent() { 
-  const name = useSelect((state) => state.name);   
-  const age = useSelect((state) => state.age);
+  const name = useSelect((state: State) => state.name);   
+  const age = useSelect((state: State) => state.age);
      
   return <div>{name} is {age} years old</div>;    
 };
@@ -82,10 +82,10 @@ The `useObject` hook also causes the component to re-render only when needed:
 ```tsx
 function MyComponent() {
  
-  const state = useObject((state) => {
-    name: state.name, 
-    age: state.age
-  });
+  const state = useObject((state: State) => ({
+    name: state.name,
+    age: state.age,
+  }));
        
   return <div>{state.name} is {state.age} years old</div>;    
 };
@@ -130,13 +130,16 @@ await store.dispatchAndWait(new Increment());
 
 // Dispatch multiple actions and wait for them to finish
 await store.dispatchAndWaitAll([new Increment(), new LoadText()]);
+
+// Dispatch an action when the state meets a condition
+store.dispatchWhen(new LoadText(), (state) => state.count >= 3, { timeoutMillis: 0 });
 ```
 
 &nbsp;
 
 # Components can dispatch actions
 
-Hooks for dispatching actions include `useDispatch`, `useDispatchAll`, etc.
+Hooks for dispatching actions include `useDispatch`, `useDispatchAll`, `useDispatchWhen`, etc.
 
 ```tsx
 function MyComponent() { 
@@ -168,6 +171,22 @@ function MyComponent() {
 
 &nbsp;
 
+To dispatch actions when the component mounts, when some values change, and when it unmounts:
+
+```tsx
+const dispatch = useDispatch({
+  deps: userId,
+  onMount: (store) => store.dispatch(new LoadUser(userId)),
+  onDepsChange: (store, oldUserId) => {
+    store.dispatch(new StopListening(oldUserId));
+    store.dispatch(new LoadUser(userId));
+  },
+  onUnmount: (store) => store.dispatch(new CleanResources()),
+});
+```
+
+&nbsp;
+
 # Actions can do asynchronous work
 
 Actions can fetch data from the internet or do any other async work.
@@ -187,7 +206,7 @@ class LoadText extends Action {
     let text = await response.text(); 
 
     // Change the state with the downloaded information
-    return (state) => text;
+    return (state: string) => text;
   }
 }
 ```
@@ -210,7 +229,7 @@ class LoadText extends Action {
     if (!response.ok) throw new UserException("Failed to load.");    
     
     let text = await response.text();     
-    return (state) => text;
+    return (state: string) => text;
   }
 }
 ```
@@ -228,7 +247,7 @@ function MyComponent() {
 
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const state = useAllState();  
+  const state = useAllState<string>();  
   
   if (isWaiting) return <CircularProgress />
   if (isFailed) return <p>Loading failed...</p>;
@@ -251,7 +270,7 @@ class LoadTextAndIncrement extends Action {
     await this.dispatchAndWait(new LoadText());
     
     // Only then increment the state
-    return (state) => state.copy({ count: state.count + 1 });  
+    return (state: State) => state.copy({ count: state.count + 1 });  
   }
 }
 ```
@@ -271,8 +290,8 @@ class BuyAndSell extends Action {
       new SellAction('TSLA')
     ]);        
 
-    return (state) => state.copy({ 
-      message: `New cash balance is ${this.state.cash}` 
+    return (state: State) => state.copy({ 
+      message: `New cash balance is ${state.cash}` 
     });
   }
 }
@@ -290,13 +309,14 @@ class SellStockForPrice extends Action {
   
     // Wait until the stock price is higher than the limit price
     await this.waitCondition(
-      (state) => state.stocks.getPrice(this.stock) >= this.price
+      (state) => state.stocks.getPrice(this.stock) >= this.price,
+      { timeoutMillis: 0 }, // No timeout.
     );
     
     // Only then post the sell order to the backend
     let amount = await postSellOrder(this.stock);    
     
-    return (state) => 
+    return (state: State) => 
       state.copy({
         stocks: state.stocks.setAmount(this.stock, amount),
       });
@@ -389,8 +409,8 @@ class SearchText extends Action {
   debounce = 300 // Milliseconds
    
   async reduce()  {      
-    let result = await loadJson('https://example.com/?q=', searchTerm);
-    return (state) => state.copy({searchResult: result});
+    let result = await loadJson('https://example.com/?q=', this.searchTerm);
+    return (state: State) => state.copy({searchResult: result});
   }   
 }
 ```
@@ -410,7 +430,7 @@ class LoadPrices extends Action {
    
   async reduce()  {      
     let result = await loadJson('https://example.com/prices');
-    return (state) => state.copy({prices: result});
+    return (state: State) => state.copy({prices: result});
   } 
 }
 ```
@@ -440,8 +460,13 @@ It supports serialization of JavaScript objects **and** ES6 class instances.
 
 ```tsx
 const store = createStore<State>({  
+  initialState: new State(),
   persistor: new Persistor(),
 });  
+
+// Wait for the saved state to load, then start the app.
+await store.ready();
+store.dispatch(new InitAppAction());
 ```
 
 &nbsp;
@@ -511,6 +536,20 @@ globalWrapError: (error: any) => {
 
 &nbsp;
 
+By default, Kiss logs what it does (for example, each dispatched action) to the console.
+Use `logger` to send these messages somewhere else, or set it to `null` to turn logging off.
+With `null`, Kiss doesn't even build the log messages:
+
+```tsx
+const store = createStore<State>({
+  initialState: new State(),
+  logger: (obj) => myLogger.info(obj), // Or `null` to turn logging off.
+  logStateChanges: true, // Also log every state change.
+});
+```
+
+&nbsp;
+
 # Advanced action configuration
 
 The team lead can create a base action class that all actions will extend, and add some common
@@ -520,7 +559,7 @@ and helper methods to find information.
 ```tsx
 class State {  
   items: Item[];    
-  selectedItem: number;
+  selectedItem: Item;
 }
 
 export abstract class Action extends KissAction<State> {
@@ -530,9 +569,9 @@ export abstract class Action extends KissAction<State> {
   get selectedItem() { return this.state.selectedItem; }
   
   // Selectors 
-  findById(id) { return this.items.find((item) => item.id === id); }
+  findById(id: number) { return this.items.find((item) => item.id === id); }
   get selectedIndex() { return this.items.indexOf(this.selectedItem); }
-  searchByText(text) { return this.items.find((item) => item.text.includes(text)); }
+  searchByText(text: string) { return this.items.find((item) => item.text.includes(text)); }
 }
 ```
 

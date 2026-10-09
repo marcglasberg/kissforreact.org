@@ -13,7 +13,7 @@ import { State } from 'State';
 
 class Increment extends KissAction<State> {
   reduce() {
-    return (state: State) => state.increment();
+    return this.state.increment();
   }
 }
 ```
@@ -55,7 +55,7 @@ class State {
 }
 
 class Item {
-  constructor(public id: string) {}  
+  constructor(public id: number, public text: string) {}  
 }
 ```
 
@@ -66,9 +66,9 @@ class SelectItem extends Action {
   constructor(public id: number) { super(); }
 
   reduce() {
-    let item = state.items.find(item => item.id === this.id);
+    let item = this.state.items.find(item => item.id === this.id);
     if (item === undefined) throw new UserException('Item not found');
-    return state.copy({selectedItem: item});
+    return this.state.copy({selectedItem: item});
   }
 }
 ```
@@ -76,8 +76,8 @@ class SelectItem extends Action {
 You would use it like this:
 
 ```ts
-var item = new Item('A'); 
-dispatch(new SelectItem(item));
+var item = new Item(1, 'A'); 
+dispatch(new SelectItem(item.id));
 ```
 
 Now, suppose we have a lot of actions that need to access the `items` and `selectedItem` properties.
@@ -88,12 +88,12 @@ abstract class Action extends KissAction<State> {
   
   // Getters shortcuts
   get items(): Item[] { return this.state.items; }
-  get selectedItem(): Item { return this.state.selectedItem; }
+  get selectedItem(): Item | null { return this.state.selectedItem; }
 
   // Selectors
   findById(id: number): Item | undefined { return this.items.find(item => item.id === id); }
   searchByText(text: string): Item | undefined { return this.items.find(item => item.text.includes(text)); }  
-  get selectedIndex(): number { return this.selectedItemId !== null ? this.items.findIndex(item => item.id === this.selectedItemId) : -1; }
+  get selectedIndex(): number { return this.selectedItem !== null ? this.items.indexOf(this.selectedItem) : -1; }
 }
 ```
 
@@ -104,9 +104,9 @@ class SelectItem extends Action {
   constructor(public id: number) { super(); }
 
   reduce() {
-    let item = this.findbyId(this.id); // Here!
+    let item = this.findById(this.id); // Here!
     if (item === undefined) throw new UserException('Item not found');
-    return state.copy({selectedItem: item});
+    return this.state.copy({selectedItem: item});
   }
 }
 ```
@@ -114,13 +114,13 @@ class SelectItem extends Action {
 The difference above is that, instead of writing:
 
 ```ts
-let item = state.items.find(item => item.id === this.id); 
+let item = this.state.items.find(item => item.id === this.id); 
 ```
 
 You can simply write:
 
 ```ts
-let item = this.findbyId(this.id); 
+let item = this.findById(this.id); 
 ```
 
 It may seem a small reduction of boilerplate, but it adds up.

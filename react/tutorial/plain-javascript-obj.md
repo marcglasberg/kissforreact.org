@@ -147,7 +147,7 @@ const createTodoList = (items: TodoItem[] = []): TodoList => ({
   
   toggleTodo(item: TodoItem) {
     const newTodos = this.items.map((itemInList) =>
-      itemInList === item ? item.toggleCompleted() : itemInList
+      itemInList === item ? { ...item, completed: !item.completed } : itemInList
     );
     return createTodoList(newTodos);
   },

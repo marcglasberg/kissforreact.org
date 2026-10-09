@@ -143,7 +143,7 @@ class AddRandomText extends Action {
     let jsonResponse = await response.json();
     let text = jsonResponse[0].todo;
      
-    return (state) => state.copy({text: text}));
+    return (state: State) => state.copy({text: text});
   }
 } 
 ```
@@ -167,7 +167,7 @@ class AddRandomText extends Action {
     let jsonResponse = await response.json();
     let text = jsonResponse[0].todo;
      
-    return (state) => state.copy({text: text}));
+    return (state: State) => state.copy({text: text});
   }
 } 
 ```

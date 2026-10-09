@@ -176,7 +176,7 @@ and then maps over them to render each todo item component.
 
 ```tsx
 function ListOfTodos() {
-  const todoItems = useSelect((state) => state.todoList.items);
+  const todoItems = useSelect((state: State) => state.todoList.items);
 
   return (
     <div className="listOfTodos">

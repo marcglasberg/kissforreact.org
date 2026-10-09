@@ -16,7 +16,7 @@ At any moment, you can print the current store state to the console,
 from inside any **component**:
 
 ```ts
-const state = useAllState();
+const state = useAllState<State>();
 console.log(state);
 ```
 

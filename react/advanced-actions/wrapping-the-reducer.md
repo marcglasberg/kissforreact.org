@@ -14,8 +14,8 @@ If you do, use it with caution.
 
 Actions allow you to define a `wrapReduce()` function,
 that gets a reference to the action reducer as a parameter.
-If you override `wrapReduce()` it's up to you to call `reduce()` and
-return a result.
+If you override `wrapReduce()` it's up to you to return a function that calls `reduce()` and
+returns a result.
 
 In `wrapReduce()` you may run some code before and after the reducer runs,
 and then change its result, or even prevent the reducer from running.
@@ -39,8 +39,8 @@ class SendMsg extends Action {
   constructor(private msg: Msg) { super(); }      
  
   async reduce() {
-    await service.sendMessage(msg);
-    return (state: State) => this.state.setMsg(msg.id, msg.copy(status: 'sent'));
+    await service.sendMessage(this.msg);
+    return (state: State) => state.setMsg(this.msg.id, this.msg.copy({ status: 'sent' }));
   }
 }
 ```
@@ -63,14 +63,14 @@ class SendMsg extends Action {
   constructor(private msg: Msg) { super(); }      
  
   async reduce() {    
-    await service.sendMessage(msg);
+    await service.sendMessage(this.msg);
     
-    const currentMsg = this.state.getMsgById(msg.id);
+    const currentMsg = this.state.getMsgById(this.msg.id);
     
     if (currentMsg.status === 'received')
       return null;       
     else 
-      return (state) => this.state.setMsg(msg.id, msg.copy(status: 'sent'))          
+      return (state: State) => state.setMsg(this.msg.id, this.msg.copy({ status: 'sent' }))          
   }
 }
 ```
@@ -81,25 +81,27 @@ Another option is using `wrapReduce()` to wrap the reducer:
 class SendMsg extends Action {
   constructor(private msg: Msg) { super(); }      
 
-  async wrapReduce(reduce: () => KissReducer<St>)) {   
+  wrapReduce(reduce: () => AsyncReducer<State>) {   
+    return async () => {
       
-    // Get the message object before the reducer runs.  
-    const previousMsg = this.state.getMsgById(msg.id);
+      // Get the message object before the reducer runs.  
+      const previousMsg = this.state.getMsgById(this.msg.id);
     
-    const newState = await reduce();
+      const newState = await reduce();
     
-    // Get the current message object, after the reducer runs.
-    const currentMsg = this.state.getMsgById(msg.id);
+      // Get the current message object, after the reducer runs.
+      const currentMsg = this.state.getMsgById(this.msg.id);
       
-    // Only update the state if the message object hasn't changed.  
-    return (previousMsg === currentMsg) 
-      ? newState 
-      : null;
+      // Only update the state if the message object hasn't changed.  
+      return (previousMsg === currentMsg) 
+        ? newState 
+        : null;
+    };
   }
  
   async reduce() {    
-    await service.sendMessage(msg);
-    return (state) => this.state.setMsg(msg.id, msg.copy(status: 'sent'))            
+    await service.sendMessage(this.msg);
+    return (state: State) => state.setMsg(this.msg.id, this.msg.copy({ status: 'sent' }))            
   }
 }
 ```
@@ -112,20 +114,23 @@ to add this behavior to multiple actions:
 
 ```ts
 export abstract class Action extends KissAction<State> {
-  observedState = undefined;  
+  observedState?: (state: State) => unknown;  
   
-  async wrapReduce(reduce: () => KissReducer<St>)) {
+  wrapReduce(reduce: () => AsyncReducer<State>) {
+    const observedState = this.observedState;
     if (observedState === undefined) {
       return reduce;
     }        
     
-    let oldObservedState = this.observedState(this.state);    
-    let newState = await reduce();
-    let newObservedState = this.observedState(this.state);    
+    return async () => {
+      let oldObservedState = observedState(this.state);    
+      let newState = await reduce();
+      let newObservedState = observedState(this.state);    
       
-    return (oldObservedState === newObservedState) 
-      ? newState 
-      : null;
+      return (oldObservedState === newObservedState) 
+        ? newState 
+        : null;
+    };
   }  
 }
 ```
@@ -137,11 +142,11 @@ to make sure the reducer is only applied if the observed state hasn't changed:
 class SendMsg extends Action {
   constructor(private msg: Msg) { super(); }      
 
-  observedState = (state :State) => this.state.getMsgById(msg.id); 
+  observedState = (state: State) => state.getMsgById(this.msg.id); 
   
   async reduce() {    
-    await service.sendMessage(msg);
-    return (state) => this.state.setMsg(msg.id, msg.copy(status: 'sent'))            
+    await service.sendMessage(this.msg);
+    return (state: State) => state.setMsg(this.msg.id, this.msg.copy({ status: 'sent' }))            
   }
 }
 ```

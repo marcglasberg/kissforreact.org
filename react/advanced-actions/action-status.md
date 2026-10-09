@@ -63,7 +63,7 @@ console.log(action.isCompletedOk);
 Better yet, you can get the status directly from the `dispatchAndWait` function:
 
 ```ts       
-let status = await store.dispatchAndWait(MyAction());
+let status = await store.dispatchAndWait(new MyAction());
 console.log(status.isCompletedOk);
 ```
 
@@ -91,10 +91,10 @@ You can also use the status to check if the action has finished running
 the `before()`, `reduce()`, and `after()` functions:
 
 ```ts
-let status = await dispatchAndWait(MyAction(info));
-console.log(action.status.hasFinishedMethodBefore);
-console.log(action.status.hasFinishedMethodReduce);
-console.log(action.status.hasFinishedMethodAfter);
+let status = await store.dispatchAndWait(new MyAction());
+console.log(status.hasFinishedMethodBefore);
+console.log(status.hasFinishedMethodReduce);
+console.log(status.hasFinishedMethodAfter);
 ```
 
 ## Use cases
@@ -112,8 +112,10 @@ You could have the following save action:
 
 ```ts
 class SaveAction extends Action {     
+  constructor(readonly info: Info) { super(); }
+
   async reduce() {
-    let isSaved = await saveMyInfo(); 
+    let isSaved = await saveMyInfo(this.info); 
     if (!isSaved) throw new UserException('Save failed');	 
     return null;
   }
@@ -123,6 +125,6 @@ class SaveAction extends Action {
 Then, in your widget, you can write:
 
 ```ts
-let status = await dispatchAndWait(SaveAction(info));
+let status = await dispatchAndWait(new SaveAction(info));
 if (status.isCompletedOk) navigateAwayFromTheScreen();  
 ```

@@ -107,7 +107,7 @@ function App() {
 }
 
 function Component1() {
-  const count = useSelect((state) => state.count);  
+  const count = useSelect((state: State) => state.count);  
   const dispatch = useDispatch();  
 
   return (
@@ -119,7 +119,7 @@ function Component1() {
 }
 
 function Component2() {
-  const count = useSelect((state) => state.count);  
+  const count = useSelect((state: State) => state.count);  
   const dispatch = useDispatch();  
 
   return (
@@ -311,13 +311,13 @@ query [is loading or has failed](http://localhost:3000/react/basics/wait-fail-su
 ```tsx
 function MyComponent() {
 
-  const state = useAllState();     
+  const state = useAllState<State>();     
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const error = useExceptionFor(IncrementAction);  
+  const error = useExceptionFor(LoadText);  
   
   if (isWaiting) return <div>Loading...</div>  
-  if (isFailed) return <div>Error: {error.message}</div>;
+  if (isFailed) return <div>Error: {error?.message}</div>;
   
   // Rendering the data
   return (
@@ -350,10 +350,10 @@ your actions and reducers. For example:
 
 ```ts
 // Start with some IBM stocks
-var store = Store<State>(initialState: State(portfolio: ['IBM']));
+var store = new Store<State>({ initialState: new State({ portfolio: ['IBM'] }) });
 
 // Buy Tesla stocks  
-await dispatchAndWait(new BuyAction('TSLA'));  
+await store.dispatchAndWait(new BuyAction('TSLA'));  
 
 // Assert we now have IBM and Tesla
 expect(store.state.portfolio).toEqual(['IBM', 'TSLA']);

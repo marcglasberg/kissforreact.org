@@ -75,7 +75,7 @@ expect(count).toBe(2);
 **Recording action values**
 
 ```ts
-let values = [];
+let values: number[] = [];
 
 store.mocks.add(AddAction, (action) => {
   values.push(action.value);
@@ -94,15 +94,17 @@ expect(values).toEqual([2, 9, 5]);
 **Recording dispatched action types**
 
 ```ts
-let types = [];
+let types: string[] = [];
 
-store.mocks.add('*', (action) => {
+for (const actionType of [AddAction, IncrementAction, LoadUserAction]) {
+  store.mocks.add(actionType, (action) => {
     types.push(action.constructor.name);
     return action;
-});
+  });
+}
 
 store.dispatch(new AddAction(2));
-store.dispatch(new IncrementAction(9));
+store.dispatch(new IncrementAction());
 store.dispatch(new LoadUserAction());
 
 // Assert the action types dispatched.

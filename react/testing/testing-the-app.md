@@ -29,10 +29,10 @@ Example:
 
 ```ts
 // Start with some IBM stocks
-var store = Store<State>(initialState: State(portfolio: ['IBM']));
+var store = new Store<State>({ initialState: new State({ portfolio: ['IBM'] }) });
 
 // Buy Tesla stocks  
-await dispatchAndWait(new BuyAction('TSLA'));  
+await store.dispatchAndWait(new BuyAction('TSLA'));  
 
 // Assert we now have IBM and Tesla
 expect(store.state.portfolio).toEqual(['IBM', 'TSLA']);

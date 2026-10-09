@@ -40,11 +40,12 @@ root.render(
 import "./styles.css";
 import React from "react";
 import { useEffect, useState } from "react";
-import { Store, StoreProvider, KissAction } from "kiss-for-react";
+import { createStore, StoreProvider, KissAction } from "kiss-for-react";
 import { ShowUserException, ClassPersistor } from "kiss-for-react";
 import { useSelect, useStore, useIsWaiting } from "kiss-for-react";
 import { useIsFailed, useExceptionFor } from "kiss-for-react";
 import { useClearExceptionFor, UserException } from "kiss-for-react";
+import { useIsStoreReady } from "kiss-for-react";
 import { State, TodoList, TodoItem, Filter } from "./State";
 
 // Allows the user to reload the page without losing the todo list.
@@ -70,6 +71,8 @@ let userExceptionDialog: ShowUserException = (exception, count, next) => {
 };
 
 // We declare the store with its initial state etc.
+// The store starts with the initial state, and then the persistor loads the saved state.
+// Until then, the store is not ready, and no actions can be dispatched.
 const store = createStore<State>({
   initialState: State.initialState,
   showUserException: userExceptionDialog,
@@ -125,8 +128,14 @@ function TodoInput() {
   
   // Hook to clear the error message, when the user types something new.
   const clearExceptionFor = useClearExceptionFor();
+
+  // Hook to check if the store finished loading the saved state.
+  // Actions can't be dispatched before that.
+  const isReady = useIsStoreReady();
                     
   async function processInput(text: string) {  
+    if (!isReady) return;
+
     // Add a todo item with the given text.
     const status = await store.dispatchAndWait(new AddTodoAction(text));
     
@@ -152,7 +161,9 @@ function TodoInput() {
         }}
       />
 
-      <button onClick={() => processInput(inputText)}>Add</button>
+      <button onClick={() => processInput(inputText)} disabled={!isReady}>
+        Add
+      </button>
       <div className="errorText">{isFailed && errorText}</div>
     </div>
   );
@@ -163,6 +174,10 @@ function ListOfTodos() {
 
   // Hook to get the list of all todo items from the state.
   const todoItems = useSelect((state: State) => state.todoList.items);
+
+  // While the saved state is loading, the list is still empty. Show it's loading.
+  const isReady = useIsStoreReady();
+  if (!isReady) return <div className="listOfTodos">Loading...</div>;
 
   return (
     <div className="listOfTodos">
@@ -203,8 +218,10 @@ function RemoveAllButton() {
   // Hook to access the store.
   const store = useStore();
   
-  // The button is disabled when there are no items.
-  const isDisabled = useSelect((state: State) => state.todoList.isEmpty());
+  // The button is disabled when there are no items, or the store is not ready.
+  const isEmpty = useSelect((state: State) => state.todoList.isEmpty());
+  const isReady = useIsStoreReady();
+  const isDisabled = isEmpty || !isReady;
 
   return (
     <button
@@ -222,10 +239,13 @@ function RemoveCompletedButton() {
   // Hook to access the store.
   const store = useStore();
   
-  // The button is disabled when there are no completed items.
-  const isDisabled = useSelect(
+  // The button is disabled when there are no completed items,
+  // or the store is not ready.
+  const noneCompleted = useSelect(
     (state: State) => state.todoList.countCompleted() === 0
   );
+  const isReady = useIsStoreReady();
+  const isDisabled = noneCompleted || !isReady;
 
   return (
     <button
@@ -247,8 +267,14 @@ function FilterButton() {
   // Hook to get the current filter from the state.
   const filter = useSelect((state: State) => state.filter);
 
+  // The button is disabled while the store is not ready.
+  const isReady = useIsStoreReady();
+
   return (
-    <button onClick={() => { store.dispatch(new NextFilterAction()); }}>
+    <button 
+      onClick={() => { store.dispatch(new NextFilterAction()); }}
+      disabled={!isReady}
+    >
       {filter}
     </button>
   );
@@ -312,7 +338,7 @@ class AddRandomTodoAction extends Action {
 
     // Return the new state with the updated todo list.
     return (state: State) =>
-      state.withTodoList(this.state.todoList.addTodoFromText(text));
+      state.withTodoList(state.todoList.addTodoFromText(text));
   }
 }
 
@@ -325,10 +351,13 @@ function AddRandomTodoButton() {
   // Hook to check if the given action is currently loading.
   const isLoading = useIsWaiting(AddRandomTodoAction);
 
+  // The button is disabled while the store is not ready.
+  const isReady = useIsStoreReady();
+
   return (
     <button
       onClick={() => store.dispatch(new AddRandomTodoAction())}
-      disabled={isLoading}
+      disabled={isLoading || !isReady}
     >
       {isLoading ? "Loading..." : "Add Random Todo"}
     </button>

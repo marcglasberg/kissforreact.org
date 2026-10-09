@@ -15,9 +15,9 @@ The component will then re-render whenever the state changes:
 
 ```tsx
 function MyComponent() { 
-  const state = useAllState();   
+  const state = useAllState<State>();   
   
-  return <div>{state.name} has {state.age} years old</div>;    
+  return <div>{state.name} is {state.age} years old</div>;    
 };
 ```
 
@@ -34,8 +34,8 @@ The component re-renders only when that part changes:
 
 ```tsx
 function MyComponent() { 
-  const name = useSelect((state) => state.name);   
-  const age = useSelect((state) => state.age);
+  const name = useSelect((state: State) => state.name);   
+  const age = useSelect((state: State) => state.age);
      
   return <div>{name} has {age} years old</div>;    
 };
@@ -50,16 +50,21 @@ Finally, the `useObject` hook is another alternative that causes the component t
 ```tsx
 function MyComponent() {
  
-  const state = useObject((state) => {
-    name: state.name, 
-    age: state.age
-  });
+  const state = useObject((state: State) => ({
+    name: state.name,
+    age: state.age,
+  }));
        
-  return <div>{state.name} has {state.age} years old</div>;    
+  return <div>{state.name} is {state.age} years old</div>;    
 };
 ```
 
 The component will now re-render only when the internal properties of the selected object change.
+
+Note you can't do this with `useSelect`, because the selector creates a new object each time,
+so `useSelect` would see a different value for every state change, and re-render the component
+every time. Instead, `useObject` compares the new object with the previous one, value by value.
+It also works with arrays: `useObject((state: State) => [state.name, state.age])`.
 In other words, when at least one of `name` or `age` changes.
 
 ## Try it out

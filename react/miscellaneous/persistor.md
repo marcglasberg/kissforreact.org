@@ -36,9 +36,10 @@ Your UI can use the `initialState` while the saved state loads.
 For example, if some information is missing from the initial state,
 the UI can show a loading indicator in its place.
 
-However, **any state changes made before the saved state is loaded may be overwritten by it.**
-For this reason, use `await store.ready()` to wait until the store has loaded the saved state,
-and only then dispatch the actions that start your app:
+However, **you can't change the state before the saved state is loaded**, because it would
+overwrite your changes. For this reason, dispatching an action before the store is ready
+throws a `StoreException`. Use `await store.ready()` to wait until the store has loaded the
+saved state, and only then dispatch the actions that start your app:
 
 ```tsx
 const store = createStore<State>({
@@ -61,6 +62,44 @@ A few things to know about `store.ready()`:
 * If the store has no persistor, it's ready right away.
 
 * In the future, other things the store needs to do at startup may also be waited for here.
+
+## useIsStoreReady
+
+In your components, use the `useIsStoreReady` hook to know if the store is ready.
+It returns `false` while the saved state is loading, and `true` after that.
+The component re-renders when the store becomes ready.
+
+Use it to show a loading state, and to disable the buttons that dispatch actions,
+since dispatching before the store is ready throws:
+
+```tsx
+function TodoList() {
+  const isReady = useIsStoreReady();
+  const items = useSelect((state: State) => state.todoList.items);
+
+  // Before the store is ready, the list is empty. Show it's loading, instead of "No todos".
+  if (!isReady) return <CircularProgress />;
+  ...
+}
+
+function AddRandomTodoButton() {
+  const isReady = useIsStoreReady();
+  const dispatch = useDispatch();
+
+  return (
+    <Button disabled={!isReady} onClick={() => dispatch(new AddRandomTodoAction())}>
+      Add Random Todo
+    </Button>
+  );
+}
+```
+
+You don't always need it. Sometimes the initial state already tells you the app is still
+loading. But note that when there is no saved state yet (for example, the first time the app
+runs), the store stays with the initial state even after it's ready. Only `useIsStoreReady`
+can tell these two cases apart.
+
+If the store has no persistor, `useIsStoreReady` is always `true`.
 
 Let's first see how to implement your own persistor,
 and then let's see how to use the `ClassPersistor` that comes out of the box with Kiss.

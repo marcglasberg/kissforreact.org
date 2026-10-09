@@ -27,13 +27,13 @@ Thankfully, this is very easy to do with Kiss, by using the following functions:
 ## In actions
 
 In actions, we have direct access to the process phase functions above by
-using `this.isWaiting`, `this.isFailed`, `this.exceptionFor` and `this.cearExceptionFor`.
+using `this.isWaiting`, `this.isFailed`, `this.exceptionFor` and `this.clearExceptionFor`.
 
 For example, suppose we want to create a `SellAction` action that sells a stock.
 However, if there is already a `SellAction` or `BuyAction` action currently running,
 we want to show an error message instead. This is how you can do it:
 
-```dart    
+```ts    
 class SellAction extends Action {
   constructor(public stock: string) { super(); }
 
@@ -42,13 +42,13 @@ class SellAction extends Action {
     // Make sure we're not in the middle of another sell or buy process 
     if (this.isWaiting(SellAction) 
         || this.isWaiting(BuyAction)) {
-      throw UserException('Please wait for the current order to complete.');
+      throw new UserException('Please wait for the current order to complete.');
     }
     
     // Only then post the sell order to the backend
     let amount = await postSellOrder(this.stock);    
     
-    return (state) => 
+    return (state: State) => 
       state.copy({
         stocks: state.stocks.setAmount(this.stock, amount)
       });
@@ -63,15 +63,16 @@ hooks `useIsWaiting`, `useIsFailed`, `useExceptionFor` and `useClearExceptionFor
 
 We have already previously seen how to read the state and dispatch actions from components:
 
-```dart    
+```tsx    
 function MyComponent() {
 
-  const state = useAllState(); 
+  const state = useAllState<State>(); 
+  const store = useStore();
   
   return (
     <div>
       <p>Counter: {state.counter}</p>
-      <button onClick={() => store.dispatch(IncrementAction())}>Increment</button>
+      <button onClick={() => store.dispatch(new IncrementAction())}>Increment</button>
     </div>
   );
 };
@@ -84,11 +85,11 @@ Now, let's see how to show a spinner while an action is being processed, and sho
 Hook `useIsWaiting(actionType)` returns true if the given action type is currently being
 processed. By using this hook, you can show a spinner while an action is being processed:
 
-```dart
+```tsx
 function MyComponent() {
 
   const isWaiting = useIsWaiting(IncrementAction);
-  const state = useAllState(); 
+  const state = useAllState<State>(); 
     
   return (
     <div>
@@ -107,11 +108,11 @@ function MyComponent() {
 Hook `useIsFailed(actionType)` returns true if the given action type just failed.
 By using this hook, you can show an error message when an action fails:
 
-```dart
+```tsx
 function MyComponent() {
 
   const isFailed = useIsFailed(IncrementAction);
-  const state = useAllState(); 
+  const state = useAllState<State>(); 
     
   return (
     <div>
@@ -129,18 +130,18 @@ If the action failed with a `UserException`, you can get this error by doing
 `let error = useExceptionFor(actionType)` and then get the error message
 to eventually show it in the UI.
 
-```dart
+```tsx
 function MyComponent() {
 
   const isFailed = useIsFailed(IncrementAction);
   const exception = useExceptionFor(IncrementAction);
-  const state = useAllState(); 
+  const state = useAllState<State>(); 
     
   return (
     <div>
       {
       isFailed 
-        ? <p>Loading failed: {exception.message}</p>
+        ? <p>Loading failed: {exception?.message}</p>
         : <p>Counter: {state.counter}</p>
       }
     </div>
@@ -159,7 +160,7 @@ function MyComponent() {
 
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const state = useAllState();  
+  const state = useAllState<State>();  
   
   if (isWaiting) return <CircularProgress />
   if (isFailed) return <p>Loading failed...</p>;
@@ -174,7 +175,7 @@ function MyComponent() {
 
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const state = useAllState();  
+  const state = useAllState<State>();  
   const store = useStore();
   
   if (isWaiting) return <CircularProgress />
@@ -182,7 +183,7 @@ function MyComponent() {
   if (isFailed) return (
     <div>
       <p>Loading failed...</p>
-      <button onClick={() => store.dispatch(LoadText())}>Retry</button>    
+      <button onClick={() => store.dispatch(new LoadText())}>Retry</button>    
     </div>
   );
   

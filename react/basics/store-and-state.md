@@ -12,10 +12,10 @@ or with `new Store()`:
 
 ```tsx
 // Using createStore
-const store = createStore<State>();
+const store = createStore<State>({ initialState: new State() });
 
 // Using new Store
-const store = new Store<State>(); 
+const store = new Store<State>({ initialState: new State() }); 
 ```
 
 ## Initial state

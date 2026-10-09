@@ -127,7 +127,7 @@ class AddRandomTodoAction extends Action {
     let text = jsonResponse[0].todo;
     
     return (state: State) =>
-      state.withTodoList(this.state.todoList.addTodoFromText(text));
+      state.withTodoList(state.todoList.addTodoFromText(text));
   }
 }
 ```
@@ -159,7 +159,7 @@ class AddRandomTodoAction extends Action {
 
   async reduce() {
     let text = await this.fetchRandomTodo();    
-    return (state: State) => state.withTodoList(this.state.todoList.addTodoFromText(text));
+    return (state: State) => state.withTodoList(state.todoList.addTodoFromText(text));
   }
   
   async fetchRandomTodo() {   

@@ -365,7 +365,7 @@ abstract class UserAction extends Action {
 
   // Override the reduce method to call reduceSlice.
   reduce() {
-    let result = this.reduceSlice(this.state.user);
+    let result = this.reduceSlice();
     if (result === null) return null;    
     else if (result instanceof Promise) {
       return result.then((promiseReducer) => {
@@ -377,7 +377,7 @@ abstract class UserAction extends Action {
         };
       });
     }       
-    else return state.withUser(newData);
+    else return this.state.withUser(result);
   }
 }
 ```
@@ -396,7 +396,7 @@ abstract class UserAction extends Action {
 
   // Override the reduce method to call reduceSlice.
   reduce() {
-    let result = this.reduceSlice(this.state.user);
+    let result = this.reduceSlice();
     if (result === null) return null;    
     else if (result instanceof Promise) {
       return result.then((promiseReducer) => {
@@ -408,7 +408,7 @@ abstract class UserAction extends Action {
         };
       });
     }       
-    else return { ...state, user: newData };
+    else return { ...this.state, user: result };
   }
 }
 ```
@@ -458,19 +458,19 @@ abstract class PortfolioAction extends Action {
 
   // Override the reduce method to call reduceSlice.
   reduce() {
-    let result = this.reduceSlice(this.state.user.portfolio);
+    let result = this.reduceSlice();
     if (result === null) return null;    
     else if (result instanceof Promise) {
       return result.then((promiseReducer) => {
         if (promiseReducer === null) return null;        
         return (state: State) => {
-          let newData = promiseReducer(state.user.portfolio));
+          let newData = promiseReducer(state.user.portfolio);
           if (newData === null) return null;          
           return state.withUser(state.user.withPortfolio(newData));
         };
       });
     }       
-    else return state.withUser(state.user.withPortfolio(newData));
+    else return this.state.withUser(this.state.user.withPortfolio(result));
   }
 }
 ```
@@ -489,19 +489,19 @@ abstract class PortfolioAction extends Action {
 
   // Override the reduce method to call reduceSlice.
   reduce() {
-    let result = this.reduceSlice(this.state.user.portfolio);
+    let result = this.reduceSlice();
     if (result === null) return null;    
     else if (result instanceof Promise) {
       return result.then((promiseReducer) => {
         if (promiseReducer === null) return null;        
         return (state: State) => {
-          let newData = promiseReducer(state.user.portfolio));
+          let newData = promiseReducer(state.user.portfolio);
           if (newData === null) return null;          
           return {...state, user: { ...state.user, portfolio: newData } };
         };
       });
     }       
-    else return {...state, user: { ...state.user, portfolio: newData } };
+    else return {...this.state, user: { ...this.state.user, portfolio: result } };
   }
 }
 ```
@@ -581,7 +581,7 @@ For example:
 ```tsx
 class DuplicatePortfolio extends Action { 
   
-  reduceSlice() {
+  reduce() {
     // Type `this.portfolio` instead of `this.state.user.portfolio`
     let newPortfolio = this.portfolio.duplicate();    
     
@@ -590,7 +590,6 @@ class DuplicatePortfolio extends Action {
     
     // You need to return a `State` object.
     return this.state.withUser(newUser);
-    ); 
   }   
 }
 ```
@@ -601,9 +600,9 @@ class DuplicatePortfolio extends Action {
 ```tsx
 class DuplicatePortfolio extends Action { 
   
-  reduceSlice() {
+  reduce() {
     // Type `this.portfolio` instead of `this.state.user.portfolio`
-    let newPortfolio = duplicatePortfolio(this.portfolio);    
+    let newPortfolio = this.duplicatePortfolio(this.portfolio);    
     
     // Type `this.user` instead of `this.state.user`
     let newUser = { ...this.user, portfolio: newPortfolio };

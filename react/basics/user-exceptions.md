@@ -29,14 +29,14 @@ This is a perfect use case for `UserException`:
 
 ```ts
 class TransferMoney extends Action {
-  constructor(private amount: number) {}
+  constructor(private amount: number) { super(); }
 
   reduce() {
     if (this.amount === 0) 
       throw new UserException('You cannot transfer zero dollars.');
     
-    return state.copy({
-      cashBalance: state.cashBalance - this.amount
+    return this.state.copy({
+      cashBalance: this.state.cashBalance - this.amount
     });    
   }
 }
@@ -49,14 +49,14 @@ You also want to show an error message if the server failed to save the user:
 
 ```ts
 class SaveUser extends Action {
-  constructor(private name: string) {}
+  constructor(private name: string) { super(); }
 
   async reduce() {
     if (this.name.length < 4) 
       throw new UserException('Name must have at least 4 letters.');
     
     await this.saveUser(this.name);
-    return (state) => state.copy({user: state.user.copy({name: this.name}});
+    return (state: State) => state.copy({user: state.user.copy({name: this.name})});
   }
   
   async saveUser(name: string) {

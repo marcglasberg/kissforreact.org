@@ -19,8 +19,18 @@ const store = createStore<State>({
 ```
 
 The saved state is loaded when the store is created. Until it finishes loading,
-the store state is the `initialState`. If you need to dispatch actions when the app starts,
-first wait with `await store.ready()`, so that the saved state doesn't overwrite their changes.
+the store state is the `initialState`. Dispatching an action before that throws an error,
+since the saved state would overwrite its changes. If you need to dispatch actions when the app
+starts, first wait with `await store.ready()`.
+
+In components, use the `useIsStoreReady()` hook to show a loading state and disable buttons
+until the store is ready:
+
+```tsx
+const isReady = useIsStoreReady();
+if (!isReady) return <CircularProgress />;
+```
+
 Read more in [Persistor](../miscellaneous/persistor#waiting-for-the-store-to-be-ready).
 
 You can implement your own persistor, as long as it follows the abstract `Persistor` interface,

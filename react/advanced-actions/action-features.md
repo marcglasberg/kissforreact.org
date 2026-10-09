@@ -181,8 +181,8 @@ class SearchText extends Action {
   debounce = 300 // Milliseconds
    
   async reduce()  {      
-    let result = await loadJson('https://example.com/?q=', searchTerm);
-    return (state) => state.copy({searchResult: result});
+    let result = await loadJson('https://example.com/?q=', this.searchTerm);
+    return (state: State) => state.copy({searchResult: result});
   }   
 }
 ```
@@ -206,7 +206,7 @@ class LoadPrices extends Action {
    
   async reduce()  {      
     let result = await loadJson('https://example.com/prices');
-    return (state) => state.copy({prices: result});
+    return (state: State) => state.copy({prices: result});
   } 
 }
 ```
@@ -233,7 +233,7 @@ class LoadText extends Action {
     let response = await fetch("https://dummyjson.com/todos/random/1");        
     let jsonResponse = await response.json();
     let text = jsonResponse[0].todo;     
-    return (state) => state.copy(text: text));
+    return (state: State) => state.copy({ text });
   }   
 }
 ```
@@ -266,7 +266,7 @@ class LoadText extends Action {
             
     let jsonResponse = await response.json();
     let text = jsonResponse[0].todo;     
-    return (state) => state.copy(text: text));
+    return (state: State) => state.copy({ text });
   }   
 }
 ```

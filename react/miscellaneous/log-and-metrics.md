@@ -34,12 +34,12 @@ For example, the following code logs actions to the console in development and t
 but saves metrics in production mode:
 
 ```ts
-function actionObserver(action, dispatchCount, ini) {
+function actionObserver(action: KissAction<State>, dispatchCount: number, ini: boolean) {
   if (inDevelopment() || inTests()) {
-     if (ini) console.log('Action dispatched: ${action}');
-     else console.log('Action finished: ${action}');
+     if (ini) console.log(`Action dispatched: ${action}`);
+     else console.log(`Action finished: ${action}`);
   } else {
-    if (ini) saveMetrics('Dispatched: ${action}');
+    if (ini) saveMetrics(`Dispatched: ${action}`);
   }
 }
 ```
@@ -72,7 +72,7 @@ Its parameters are:
 The state-observer is a good place to log actions and state, and collect metrics. For example:
 
 ```ts
-function stateObserver(action, prevState, newState, error, dispatchCount) {
+function stateObserver(action: KissAction<State>, prevState: State, newState: State, error: any, dispatchCount: number) {
   saveMetrics(action, newState, error);
 }
 ```
@@ -87,7 +87,7 @@ class LoadUser extends Action {
     let user = await loadUser();
     this.log('User', user.id); // Here!
     
-    return (state) => state.copy({user: user});   
+    return (state: State) => state.copy({user: user});   
   }    
 }
 ```        
@@ -95,7 +95,7 @@ class LoadUser extends Action {
 And then, the state observer can read and use the action log:
 
 ```ts
-function stateObserver(action, prevState, newState, error, dispatchCount) {
+function stateObserver(action: KissAction<State>, prevState: State, newState: State, error: any, dispatchCount: number) {
   let actionLog = action.getLog(); // Here!
   saveMetrics(action, actionLog, newState, error);
 }

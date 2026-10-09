@@ -10,13 +10,13 @@ the state, simply return `null`. This is the same as returning the state unchang
 ```ts
 class GetAmount extends Action {
   
-  reduce() async {    
+  async reduce() {    
     let amount = await getAmount();
     
     if (amount == 0) 
       return null;
     else 
-      return (state) => state.copy({counter: state.counter + amount}));
+      return (state: State) => state.copy({counter: state.counter + amount});
   }
 }
 ```
@@ -26,10 +26,10 @@ This also works:
 ```ts
 class GetAmount extends Action {
   
-  reduce() async {    
+  async reduce() {    
     let amount = await getAmount();
     
-    return (state) => 
+    return (state: State) => 
       (amount == 0) 
         ? null
         : state.copy({counter: state.counter + amount}));        

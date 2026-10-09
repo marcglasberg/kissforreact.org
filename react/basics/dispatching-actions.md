@@ -22,7 +22,7 @@ In more detail, this is what Kiss does when you dispatch an action:
 2. The action reducer (its `reduce()` function) is called.
 3. The reducer returns a new, modified state.
 4. The new state replaces the old one.
-5. All components that use the state are rebuilt.
+5. All components that use the state re-render.
 
 ## Dispatch all (multiple actions)
 
@@ -81,6 +81,12 @@ var status = await store.dispatchAndWait(new MyAction());
 expect(status.originalError).toBeInstanceOf(UserException);
 ```
 
+The above works because a `UserException` is swallowed after it's shown to the user,
+so the promise still resolves with the status. By default, other errors are thrown back
+to you instead, which means the promise **rejects**, and you can catch it with `try/catch`.
+This is also the way to catch errors from async actions, since `dispatch` returns before
+they fail. See [Catching errors where the action is dispatched](../advanced-actions/errors-thrown-by-actions#catching-errors-where-the-action-is-dispatched).
+
 ## Dispatch and wait all
 
 Use `dispatchAndWaitAll` to dispatch the given actions in parallel, applying their reducers,
@@ -126,6 +132,21 @@ action is **sync**, which means the state gets changed right after the dispatch 
 Making sure some action you're dispatching is synchronous is usually not a very useful feature,
 but it's there if you need it, especially for testing.
              
+## Dispatch when
+
+You can use `dispatchWhen` to wait until the state meets a certain condition,
+and only then dispatch an action:
+
+```ts
+store.dispatchWhen(new LoadText(), (state) => state.count >= 3, { timeoutMillis: 0 });
+```
+
+If the condition is already true, the action is dispatched right away.
+You must always give a `timeoutMillis`, where `0` means no timeout.
+If the condition is not met in time, the action is not dispatched.
+See [dispatchWhen](../miscellaneous/wait-for-condition#dispatchwhen) for what to do when
+the timeout expires.
+
 ## Actions can dispatch other actions
 
 You can use dispatch actions from inside other actions. The dispatch functions are available
@@ -133,7 +154,7 @@ in the action object, so you can call them directly, by using `this.dispatch()` 
 
 For example:
 
-```dart
+```ts
 class LoadTextAndIncrement extends Action {
 
   async reduce() {
@@ -142,7 +163,7 @@ class LoadTextAndIncrement extends Action {
     await this.dispatchAndWait(new LoadText());
     
     // Only then increment the state
-    return (state) => state.copy({count: state.count + 1});  
+    return (state: State) => state.copy({count: state.count + 1});  
   }
 }
 ```

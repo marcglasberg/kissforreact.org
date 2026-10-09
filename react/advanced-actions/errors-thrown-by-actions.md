@@ -66,7 +66,7 @@ class LogoutAction extends Action {
     await this.deleteDatabase();
     this.dispatch(new NavigateToLoginScreenAction());
     
-    return (state) => State.initialState();
+    return () => State.initialState;
   }
   
   async checkInternetConnection() { ... }  
@@ -169,7 +169,7 @@ class LogoutAction extends Action {
     }
       
     this.dispatch(new NavigateToLoginScreenAction());    
-    return (state) => State.initialState();
+    return () => State.initialState;
   }
 }
 ```
@@ -183,7 +183,7 @@ class LogoutAction extends Action {
     await this.checkInternetConnection();
     await this.deleteDatabase();      
     this.dispatch(new NavigateToLoginScreenAction());    
-    return (state) => State.initialState();
+    return () => State.initialState;
   }
   
   wrapError(error: any) {
@@ -198,15 +198,16 @@ You may also modify your [base action](./base-action-with-common-logic) to make 
 to add this behavior to multiple actions:
 
 ```ts
-import { KissAction } from 'kiss-for-react';
+import { KissAction, UserException } from 'kiss-for-react';
 import { State } from 'State';
 
 export abstract class Action extends KissAction<State> {
-  wrapErrorMessage = undefined;  
+  wrapErrorMessage?: () => string;  
   
-  wrapError(error) {
+  wrapError(error: any) {
     if (this.wrapErrorMessage !== undefined)
-      return new UserException(wrapErrorMessage(), {hardCause: error});
+      return new UserException(this.wrapErrorMessage(), {hardCause: error});
+    return error;
   }  
 }
 ```
@@ -223,7 +224,7 @@ class LogoutAction extends Action {
     await this.checkInternetConnection();
     await this.deleteDatabase();      
     this.dispatch(new NavigateToLoginScreenAction());    
-    return (state) => State.initialState();
+    return () => State.initialState;
   }    
 }
 ```
@@ -250,7 +251,7 @@ class MyAction extends Action {
       && error.code === "Error performing get" 
       && error.message === 'Failed to get document because the client is offline'
       ) {
-      return new UserException('Check your internet connection').addCause(error);
+      return new UserException('Check your internet connection').withHardCause(error);
     } else { 
       return error;
     }   
@@ -263,17 +264,17 @@ However, then you'd have to add this code to all actions that use Firebase.
 A better way is providing it globally as the `globalWrapError` parameter, when you create the store:
 
 ```ts              
-const store = createStore<State>(
+const store = createStore<State>({
   initialState: new State(),
   globalWrapError: globalWrapError,
-);
+});
 
 function globalWrapError(error :any) {
   if (error instanceof PlatformException 
     && error.code === "Error performing get" 
     && error.message === 'Failed to get document because the client is offline'
     ) {
-    return new UserException('Check your internet connection').addCause(error);
+    return new UserException('Check your internet connection').withHardCause(error);
   } else { 
     return error;
   }
@@ -322,10 +323,10 @@ wrapError(error :any) {
 If you want this to happen globally, use the `globalWrapError` instead:
 
 ```ts
-const store = createStore<State>(
+const store = createStore<State>({
   initialState: new State(),
   globalWrapError: globalWrapError,
-);
+});
 
 function globalWrapError(error :any) {
   return (error instanceof MyException) ? null : error;
@@ -352,10 +353,10 @@ For example, if you want to disable all errors in _production_, but log them;
 and you want to throw all errors during _development_ and _tests_, this is how you can do it:
 
 ```ts
-const store = createStore<State>(
+const store = createStore<State>({
   initialState: new State(),
   errorObserver: errorObserver,
-);
+});
 
 function errorObserver(error: any, action: Action | null, store: Store<State>) {
 
@@ -384,6 +385,45 @@ The `errorObserver` is also given the errors of the [persistor](../miscellaneous
 For those errors, the `action` is `null`. Since there is no `dispatch` call to throw them to,
 returning `true` logs them with `Store.log()`, and returning `false` ignores them.
 
+## Catching errors where the action is dispatched
+
+After an error goes through `wrapError`, `globalWrapError`, `after`, and `errorObserver`,
+it is either swallowed or thrown back to the code that dispatched the action:
+
+* If you **didn't** set an `errorObserver`, a `UserException` is swallowed
+  (it was already shown to the user), and all other errors are thrown back.
+
+* If you **did** set an `errorObserver`, it decides: returning `true` throws the error back,
+  and returning `false` swallows it. This applies to all errors, including `UserException`s.
+
+When the error is thrown back, where you can catch it depends on how you dispatched the action:
+
+| Action | `try { dispatch(...) } catch`   | `try { await dispatchAndWait(...) } catch` |
+|--------|---------------------------------|--------------------------------------------|
+| Sync   | Caught                          | Caught                                     |
+| Async  | Not caught: unhandled rejection | Caught                                     |
+
+A sync action fails before `dispatch` returns, so `dispatch` throws the error.
+An async action fails after `dispatch` has already returned, so there's nobody to throw it to,
+and it becomes an unhandled promise rejection. That's the same thing that happens to
+any async code you don't await.
+
+To catch errors from async actions, use `dispatchAndWait`. Its promise rejects with the error:
+
+```ts
+try {
+  await store.dispatchAndWait(new LoadText());
+} catch (error) {
+  // Handle the error here.
+}
+```
+
+If the error is swallowed, the promise doesn't reject. It resolves with the
+[action status](./action-status), and the error is in `status.originalError`.
+
+`dispatchAndWaitAll` works the same way. If some actions fail, all of them still finish,
+and only then does the promise reject, with the error of the first failed action in the list.
+
 ## UserExceptionAction
 
 As [previously discussed](../basics/user-exceptions), the `UserException` is a special type of error
@@ -398,7 +438,7 @@ However, if you are **not** inside an action, but you still want to show an erro
 user, you may use the provided `UserExceptionAction`.
 
 ```ts
-dispatch(UserExceptionAction('Please enter a valid number'));
+dispatch(new UserExceptionAction('Please enter a valid number'));
 ```
 
 This action simply throws a corresponding `UserException` from its own `reduce()` function.
@@ -411,14 +451,14 @@ For example, here an invalid number will show an error dialog to the user,
 but the action will continue running and set the counter state to `0`:
 
 ```ts
-class ConvertAction {
-  constructor(private text: string) {}
+class ConvertAction extends Action {
+  constructor(private text: string) { super(); }
 
   reduce() {
     let value = parseInt(this.text);
 
     if (isNaN(value)) { 
-      dispatch(new UserExceptionAction('Please enter a valid number'));
+      this.dispatch(new UserExceptionAction('Please enter a valid number'));
       value = 0;
     }  
     

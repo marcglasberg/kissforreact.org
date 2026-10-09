@@ -9,15 +9,15 @@ It's easy to create undo/redo features in Kiss.
 For example, here we create the store with 
 a [state-observer](./log-and-metrics#stateobserver) that saves the most recent 100 states:
 
-```dart
-var store = Store<State>(
-  initialState: state,  
+```ts
+var store = new Store<State>({
+  initialState: new State(),  
   stateObserver: stateObserver,
-);
+});
 
-const stateHistory = [];
+const stateHistory: State[] = [];
 
-function stateObserver(action, prevState, newState, error, dispatchCount) {
+function stateObserver(action: KissAction<State>, prevState: State, newState: State, error: any, dispatchCount: number) {
   stateHistory.push(newState);
   if (stateHistory.length > 100) {
     stateHistory.shift();
@@ -27,9 +27,9 @@ function stateObserver(action, prevState, newState, error, dispatchCount) {
 
 When you want to recover one of the states, simple dispatch the built-in `UpdateStateAction`:
 
-```dart
+```ts
 // Recover the 42nd state in the history
-dispatch(new UpdateStateAction((state) => stateHistory[41]);
+store.dispatch(new UpdateStateAction((state: State) => stateHistory[41]));
 ```
 
 :::tip
