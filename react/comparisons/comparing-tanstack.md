@@ -146,7 +146,7 @@ and then use it from there.
 TanStack Query has a `staleTime` option to control when data is considered stale and should be
 refetched. By default, all cache data is considered stale after 0 seconds, meaning queries will
 refetch their data as often as you query them. Kiss has the same default but uses
-the [throttle](../advanced-actions/action-features#throttle) feature,
+the [throttle](../advanced-actions/control-features#throttle) feature,
 so each action, not queries, decides if data should be refetched.
 
 Consider an Kiss action called `LoadText`.
@@ -180,7 +180,7 @@ When you enter the page, it will dispatch an action to fetch the information onc
 and put it into the store. The 3 components will get their information from the store.
 
 In any case, if you still need to prevent multiple dispatches of some specific action,
-you can add [nonReentrant](../advanced-actions/action-features#nonreentrant) to it:
+you can add [nonReentrant](../advanced-actions/control-features#nonreentrant) to it:
 
 ```tsx
 class LoadText extends Action { 
@@ -193,7 +193,7 @@ class LoadText extends Action {
 
 TanStack Query doesn't currently have debouncing functionality
 (or I couldn't find any as of July 2024).
-In Kiss, you can use the [debounce](../advanced-actions/action-features#debounce) feature
+In Kiss, you can use the [debounce](../advanced-actions/control-features#debounce) feature
 to limit how often fetches happen in response to rapid and repeated dispatches.
 For example, you can add `debounce = 300` to debounce it for 300 milliseconds:
 
@@ -278,7 +278,7 @@ class LoadText extends Action {
 ```
 
 You can specify retry parameters like `initialDelay`, `multiplier`, `maxRetries` and `maxDelay`.
-The defaults are [here](../advanced-actions/action-features#retry).
+The defaults are [here](../advanced-actions/control-features#retry).
 
 ## Loading and failed states
 

@@ -206,3 +206,7 @@ For offline use, download the documentation:
 5. **Iterate incrementally** - Build features step by step
 6. **Ask for explanations** - Understanding the "why" helps you adapt the code
 
+## Linter
+
+Also install the [Kiss linter](../linter). It finds mistakes that compile fine but are wrong
+at runtime, so your AI agent can find and fix them by running `npx eslint`.

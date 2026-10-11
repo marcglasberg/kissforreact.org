@@ -4,307 +4,142 @@ sidebar_position: 1
 
 # Action features
 
-You can add **features** to your actions, to accomplish common tasks:
-
-* [nonReentrant](#nonreentrant)
-* [retry](#retry)
-* [checkInternet](#checkinternet)
-* [debounce](#debounce)
-* [throttle](#throttle)
-* [ignoreOld](#ignoreold)
-* [optimisticUpdate](#optimisticupdate)
-
-## nonReentrant
-
-To prevent an action from running again while it is already running,
-add `nonReentrant = true` to your action.
+You can add **features** to your actions to handle common tasks.
+For example, instead of writing:
 
 ```tsx
-class LoadText extends Action { 
+class LoadText extends Action { ...
+```
+
+You can add `checkInternet` to check for internet connectivity:
+
+```tsx
+class LoadText extends Action {
+  checkInternet = { dialog: true };
+  ...
+```
+
+Or even combine multiple features:
+
+```tsx
+class LoadText extends Action {
+  checkInternet = { dialog: true };
   nonReentrant = true;
-   
-  reduce() { ... }
-}
+  retry = { on: true };
+  ...
 ```
 
-## retry
+Most features are turned on by setting a property in your action, like the ones above.
+The optimistic features are different: your action extends a Kiss base class
+(like `OptimisticCommand`) instead of your own base action.
 
-To retry an action a few times with exponential backoff if it fails,
-add the `retry` property to your action class.
+## All available features
+
+| Feature                                                             | Purpose                                                                   | How to add                          |
+|---------------------------------------------------------------------|---------------------------------------------------------------------------|-------------------------------------|
+| [checkInternet](./internet-features#checkinternet)                  | Checks internet before the action; fails, with or without a dialog, if offline | `checkInternet = { dialog: true }` or `{ dialog: false }` |
+| [checkInternet (abort)](./internet-features#aborting-when-there-is-no-internet) | Checks internet before the action; aborts silently if offline      | `checkInternet = { abort: true }`   |
+| [unlimitedRetryCheckInternet](./internet-features#unlimitedretrycheckinternet) | Combines internet check + unlimited retry + non-reentrant      | `unlimitedRetryCheckInternet = true` |
+| [nonReentrant](./control-features#nonreentrant)                     | Aborts if the same action is already running                              | `nonReentrant = true`               |
+| [retry](./control-features#retry)                                   | Retries the action on error with exponential backoff                      | `retry = { on: true }`              |
+| [throttle](./control-features#throttle)                             | Limits action execution to at most once per throttle period               | `throttle = 5000`                   |
+| [debounce](./control-features#debounce)                             | Delays execution until after a period of inactivity                       | `debounce = 300`                    |
+| [ignoreOld](./control-features#ignoreold)                           | Ignores and cancels the older actions, when a newer one is dispatched     | `ignoreOld = true`                  |
+| [fresh](./control-features#fresh)                                   | Skips the action if its data is still fresh (not stale)                   | `fresh = 5000`                      |
+| [polling](./control-features#polling)                               | Adds periodic polling to any action                                       | `poll` and `createPollingAction()`  |
+| [sequential](./control-features#sequential)                         | Runs actions one at a time, in the order they were dispatched             | `sequential = true`                 |
+| [OptimisticCommand](./optimistic-features#optimisticcommand)        | Applies state changes optimistically, rolls back on error                 | Extend `OptimisticCommand`          |
+| [OptimisticSync](./optimistic-features#optimisticsync)              | Optimistic updates with coalescing; merges rapid dispatches into one sync | Extend `OptimisticSync`             |
+| [OptimisticSyncWithPush](./optimistic-features#optimisticsyncwithpush-and-serverpush) | Like `OptimisticSync`, but with revision tracking for server pushes | Extend `OptimisticSyncWithPush` |
+| [ServerPush](./optimistic-features#optimisticsyncwithpush-and-serverpush) | Handles server-pushed updates for `OptimisticSyncWithPush`          | Extend `ServerPush`                 |
+
+## Compatibility matrix
+
+Not all features can be combined.
+Kiss throws a `StoreException` when you dispatch an action with incompatible features.
+If you use the [Kiss linter](../linter), its `incompatible-action-features` rule also
+reports them in your editor, before you run the code.
+
+|                                 | check<br/>Internet | non<br/>Reentrant | retry | unlimited<br/>Retry<br/>Check<br/>Internet | throttle | debounce | ignore<br/>Old | fresh | Optimistic<br/>Command | Optimistic<br/>Sync | Optimistic<br/>Sync<br/>WithPush | Server<br/>Push | polling | sequential |
+|---------------------------------|:------------------:|:-----------------:|:-----:|:------------------------------------------:|:--------:|:--------:|:--------------:|:-----:|:----------------------:|:-------------------:|:--------------------------------:|:---------------:|:-------:|:----------:|
+| **checkInternet**               |         —          |        ✅         |  ✅   |                     ❌                     |    ✅    |    ✅    |       ✅       |  ✅   |           ✅           |         ✅          |                ✅                |       ❌        |    ⚠️    |     ✅     |
+| **nonReentrant**                |         ✅         |         —         |  ✅   |                     ❌                     |    ❌    |    ✅    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |    ⚠️    |     ✅     |
+| **retry**                       |         ✅         |        ✅         |   —   |                     ❌                     |    ✅    |    ❌    |       ✅       |  ✅   |           ⚠️            |         ❌          |                ❌                |       ❌        |   ❌    |     ✅     |
+| **unlimitedRetryCheckInternet** |         ❌         |        ❌         |  ❌   |                     —                      |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |   ❌    |     ❌     |
+| **throttle**                    |         ✅         |        ❌         |  ✅   |                     ❌                     |    —     |    ✅    |       ✅       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |    ⚠️    |     ✅     |
+| **debounce**                    |         ✅         |        ✅         |  ❌   |                     ❌                     |    ✅    |    —     |       ✅       |  ✅   |           ❌           |         ❌          |                ❌                |       ❌        |   ❌    |     ❌     |
+| **ignoreOld**                   |         ✅         |        ❌         |  ✅   |                     ❌                     |    ✅    |    ✅    |       —        |  ✅   |           ❌           |         ❌          |                ❌                |       ❌        |   ✅    |     ❌     |
+| **fresh**                       |         ✅         |        ❌         |  ✅   |                     ❌                     |    ❌    |    ✅    |       ✅       |   —   |           ❌           |         ❌          |                ❌                |       ❌        |    ⚠️    |     ✅     |
+| **OptimisticCommand**           |         ✅         |        ❌         |   ⚠️   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           —            |         ❌          |                ❌                |       ❌        |   ❌    |     ✅     |
+| **OptimisticSync**              |         ✅         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |          —          |                ❌                |       ❌        |   ❌    |     ❌     |
+| **OptimisticSyncWithPush**      |         ✅         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                —                 |       ❌        |   ❌    |     ❌     |
+| **ServerPush**                  |         ❌         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |        —        |   ❌    |     ❌     |
+| **polling**                     |         ⚠️          |         ⚠️         |  ❌   |                     ❌                     |    ⚠️     |    ❌    |       ✅       |   ⚠️   |           ❌           |         ❌          |                ❌                |       ❌        |    —    |     ⚠️      |
+| **sequential**                  |         ✅         |        ✅         |  ✅   |                     ❌                     |    ✅    |    ❌    |       ❌       |  ✅   |           ✅           |         ❌          |                ❌                |       ❌        |    ⚠️    |     —      |
+
+#### ✅ Compatible (can be combined)
+
+#### ❌ Incompatible (cannot be combined)
+
+#### ⚠️ Can be combined, but read the caveat in the feature page
+
+Note `checkInternet = { dialog: ... }` and `checkInternet = { abort: true }` are two ways
+of using the same property, so they can't be used together.
+
+Some features also have other requirements:
+
+* `retry` and `unlimitedRetryCheckInternet` need an **async** reducer.
+  With a sync reducer, the dispatch fails with a `StoreException`.
+* Actions with `debounce` or `sequential` are always async,
+  so they can't be dispatched with `dispatchSync`.
+
+## Clearing the features on logout
+
+The store keeps some information for these features: the fresh keys, the throttle and
+debounce locks, the `ignoreOld` keys, the polling timers, the sequential queues, the actions
+waiting to retry,
+the `OptimisticSync` and `OptimisticSyncWithPush` keys, and the revisions kept by
+`OptimisticSyncWithPush` and `ServerPush`.
+
+On logout, call `store.clearInternalActionProps()`, so that the actions of the previous user
+stop, and don't affect the next user. For example, without it, loading the data of the new
+user could be aborted because the data of the previous user is still "fresh".
 
 ```tsx
-class LoadText extends Action {   
-  retry = {on: true}
-
-  reduce() { ... }
-}
-```
-
-The retry parameters are:
-
-* Initial Delay: The delay before the first retry attempt.
-* Multiplier: The factor by which the delay increases for each subsequent retry.
-* Maximum Retries: The maximum number of retries before giving up.
-* Maximum Delay: The maximum delay between retries to avoid excessively long wait times.
-
-And their default values are:
-
-* `initialDelay` is `350` milliseconds.
-* `multiplier` is `2`, which means the default delays are: 350 millis, 700 millis, and 1.4 seg.
-* `maxRetries` is `3`, meaning it will try a total of 4 times.
-* `maxDelay` is `5000` milliseconds (which means 5 seconds).
-
-You can change one or more of the default values.
-
-```tsx
-class LoadText extends Action {
-
-  retry = {
-    initialDelay: 350, // Delay in milliseconds before the first retry
-    maxRetries: 3,     // Number of retries before stopping
-    multiplier: 2,     // Factor used to increase the delay after each retry
-    maxDelay: 5000,    // Maximum delay between retries, in milliseconds
+class Logout extends Action {
+  reduce() {
+    this.store.clearInternalActionProps();
+    return State.initialState();
   }
-   
-  reduce() { ... }
 }
 ```
 
-If you want to retry unlimited times, make `maxRetries` equal to: `-1`:
+It does the following:
 
-```ts
-class LoadText extends Action {
-   retry = {maxRetries: -1};
-}
-```
+* Removes the fresh keys and the throttle locks.
+* Makes the debounced actions that are still waiting finish, without running their reducer.
+* Forgets the `ignoreOld` keys. The actions dispatched after it don't make the ones dispatched
+  before it old.
+* Stops all polling.
+* Discards the actions waiting in sequential queues, so they don't run after the logout.
+* Stops the actions that retry (with `retry` or `unlimitedRetryCheckInternet`),
+  so they don't keep retrying for the previous user. They are aborted, so they don't fail,
+  and don't show errors.
+* Releases the `OptimisticSync` and `OptimisticSyncWithPush` keys. An action whose request is
+  in flight stops when the request finishes, without sending follow-up requests.
+* Removes the revisions kept by `OptimisticSyncWithPush` and `ServerPush`. The server
+  revisions you saved in the state are kept, and still used.
 
-Notes:
+Actions that are already running still finish, and may still change the state.
+The `nonReentrant` keys are not cleared directly, since they belong to the actions that are
+running, but stopping a retrying action releases its key.
 
-* If you `await dispatchAndWait(action)` and the action uses unlimited retries,
-  it may never finish if it keeps failing. So, be careful when using it.
+It's also called when the store is shut down with `store.setShutDown(true)`.
 
-* If the `before` method throws an error, the retry will NOT happen.
+<hr></hr>
 
-* The retry delay only starts after the reducer finishes executing. For example, if the
-  reducer takes 1 second to fail, and the retry delay is 350 millis, the first retry will
-  happen 1.35 seconds after the first reducer started.
+All features are explained in detail in the following pages:
 
-* When the action finally fails, the last error will be rethrown, and the previous ones
-  will be ignored.
-
-* For most actions that use `retry`, consider also making them non-Reentrant to avoid
-  multiple instances of the same action running at the same time:
-
-  ```ts
-  class MyAction extends KissAction<State> {
-     retry = {on: true}
-     nonReentrant = true;
-  }
-  ```
-
-* Keep in mind that all actions using the `retry` feature will become asynchronous, even
-  if the original action was synchronous.
-
-* If necessary, you can know the current _attempt number_ by using `this.attempts`.
-
-## checkInternet
-
-Adding `checkInternet = { dialog: true }` to your action ensures it only runs with internet. Otherwise, an **error dialog** prompts users to check their connection:
-
-```tsx
-class LoadPrices extends Action {  
-  
-  checkInternet = { dialog: true } 
-   
-  async reduce() { ... } 
-}   
-```
-
-Use `checkInternet = { dialog: false }` if you don't want to open a dialog.
-Instead, you can display some information in your widgets:
-
-```tsx
-function MyComponent() {
-  const isFailed = useIsFailed(LoadPrices);
-
-  return (
-    <div>
-      {isFailed ? <p>No Internet connection</p> : null}
-    </div>
-  );
-};   
-```
-
-In web environments, the default is checking the availability of the internet using `navigator.onLine`. However, `navigator.onLine` is not very useful, as it only tells you if there's a local connection, and not whether the internet is accessible. Also, this only really works for the web.
-
-In other words, to make `checkInternet` work properly you will need to provide your own logic to check for internet availability.
-To that end, you must override the `hasInternet` method of your base action, and then provide your own logic to determine if the internet is available or not.
-
-Alternatives are using the [NetInfo](https://www.npmjs.com/package/@rescript-react-native/netinfo) package for React Native,
-or using the [is-online](https://www.npmjs.com/package/is-online) package
-for Node.js and the browser.
-
-For an example using NetInfo, first add it to your `package.json`:
-
-```json
-"dependencies": {
-   "@react-native-community/netinfo": "^11.4.1"
-}
-```
-
-Then, import it in your base action, and override the `hasInternet()` method:
-
-```typescript
-import NetInfo from '@react-native-community/netinfo';
-
-export abstract class Action extends KissAction<State> {
-
-   protected hasInternet(): Promise<boolean> {
-      return NetInfo.fetch().then(state => state.isConnected ?? true);
-   }
-}
-```
-
-## debounce
-
-To limit how often an action runs in response to rapid input,
-add something like `debounce = 300` to your action class,
-where `300` is the number of milliseconds.
-
-For example, when a user types into a search bar, debouncing ensures that not every keystroke
-triggers a server request. Instead, the action waits until the user stops typing for a short time before running.
-
-```tsx
-class SearchText extends Action {
-  constructor(public searchTerm: string) { super(); }
-  
-  debounce = 300 // Milliseconds
-   
-  async reduce()  {      
-    let result = await loadJson('https://example.com/?q=', this.searchTerm);
-    return (state: State) => state.copy({searchResult: result});
-  }   
-}
-```
-
-> Important: _this feature is still in development. It should be available soon._
-
-## throttle
-
-To prevent an action from running too frequently,
-add something like `throttle = 5000` to your action class,
-where `5000` means 5 seconds.
-
-After the action runs it's considered _fresh_, and it won't run
-again for a set period of time, even if you dispatch it.
-After this period ends, the action is considered _stale_ and is ready to run again.
-
-```tsx
-class LoadPrices extends Action {  
-  
-  throttle = 5000 // Milliseconds
-   
-  async reduce()  {      
-    let result = await loadJson('https://example.com/prices');
-    return (state: State) => state.copy({prices: result});
-  } 
-}
-```
-
-> Important: _this feature is still in development. It should be available soon._
-
-## ignoreOld
-
-If some action that performs a slow async process may be dispatched multiple times in a rapid
-sequence, you may want to ignore its result if a newer action of the same type was
-already dispatched. This
-avoids [race conditions](https://maxrozen.com/race-conditions-fetching-data-react-with-useeffect)
-where the result of an older action overwrites the result of a newer one.
-
-In Kiss this problem can be easily solved by adding `ignoreOld = true` to
-your action class:
-
-```tsx
-class LoadText extends Action {  
-  
-  ignoreOld = true
-   
-  async reduce()  {      
-    let response = await fetch("https://dummyjson.com/todos/random/1");        
-    let jsonResponse = await response.json();
-    let text = jsonResponse[0].todo;     
-    return (state: State) => state.copy({ text });
-  }   
-}
-```
-
-In the above example, if the action gets called twice or more before the first one finishes,
-only the last one will be considered, and the previous ones will be ignored.
-
-In more detail, the returned state from the reducer will only be applied if the action is the
-most recent one dispatched. If it's not, the state will be discarded.
-
-Note that we are not aborting the requests, but simply ignoring the reducer result.
-This is fine for most cases.
-
-If we actually want to abort the requests, we need to use
-an [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/signal)
-by calling `this.getAbortController()` in the action, and then using that controller to
-abort the request:
-
-```tsx
-class LoadText extends Action {  
-  
-  ignoreOld = true
-   
-  async reduce()  {
-    let abortController = this.getAbortController(); // Here!    
-    
-    let response = await fetch("https://dummyjson.com/todos/random/1", {
-      signal: abortController.signal, // Here!
-    });
-            
-    let jsonResponse = await response.json();
-    let text = jsonResponse[0].todo;     
-    return (state: State) => state.copy({ text });
-  }   
-}
-```
-
-Kiss will automatically abort the previous requests by calling `abortController.abort()`
-when a new action is dispatched.
-When this happens, the `fetch()` promise will reject with an `AbortError`,
-but this error is caught by Kiss and ignored, so you don't need to worry about it.
-
-If instead of `fetch` you use **Axios**, it also works:
-
-```tsx
-let response = await axios.get('https://dummyjson.com/todos/random/1', {
-  signal: abortController.signal
-});
-```
-
-Note: The `ignoreOld` feature is not compatible with the [nonReentrant](#nonreentrant) feature,
-because they are opposite concepts. While `nonReentrant` aborts the newer actions
-if an older one is running, `ignoreOld` aborts the older actions if a newer one is running.
-If you try to use both at the same time, an error will be thrown.
-
-> Important: _this feature is still in development. It should be available soon._
-
-## optimisticUpdate
-
-To provide instant feedback when an action saves data to the server, you can use an optimistic update.
-This feature changes the state immediately, before the server confirms that the update succeeded.
-
-If the server update fails, the state is changed back. You can also show a notification to the user.
-
-```tsx
-class SaveName extends Action {  
-  
-  optimisticUpdate = { ... } 
-   
-  async reduce() { ... } 
-}
-```
-
-> Important: _this feature is still in development. It should be available soon._
+* [Internet features](./internet-features)
+* [Control features](./control-features)
+* [Optimistic features](./optimistic-features)

@@ -355,7 +355,7 @@ add the `retry` property to your action class.
 class LoadText extends Action {   
   retry = {on: true}
          
-  reduce() { ... }
+  async reduce() { ... }
 }
 ```
 
@@ -373,7 +373,7 @@ class LoadText extends Action {
     maxDelay: 5000,    // Maximum delay between retries, in milliseconds
   }
    
-  reduce() { ... }
+  async reduce() { ... }
 }
 ```
 
@@ -395,7 +395,23 @@ class LoadPrices extends Action {
 
 &nbsp;
 
-## Debounce (soon)
+## UnlimitedRetryCheckInternet
+
+To keep trying an action until it succeeds, even while the device is offline, add the
+`unlimitedRetryCheckInternet` property. If there is no internet, the action waits, and
+retries until there is. It also retries if there is internet but the action fails.
+
+```tsx
+class LoadPrices extends Action {
+  unlimitedRetryCheckInternet = true
+
+  async reduce() { ... }
+}
+```
+
+&nbsp;
+
+## Debounce
 
 To limit how often an action runs in response to rapid input, add a `debounce` property
 to your action class. For example, when a user types into a search bar, debouncing ensures that not
@@ -417,12 +433,34 @@ class SearchText extends Action {
 
 &nbsp;
 
-## Throttle (soon)
+## IgnoreOld
+
+When the user switches tabs or filters quickly, a slow older request may finish last, and
+overwrite the newer information. To prevent that, add the `ignoreOld` property to your action
+class. When the action is dispatched again, the previous ones that are still running are
+ignored, and their requests are cancelled, if you pass them the `abortSignal`.
+
+```tsx
+class LoadTab extends Action {
+  constructor(readonly tab: string) { super(); }
+  ignoreOld = true;
+
+  async reduce() {
+    let response = await fetch(`/api/items?tab=${this.tab}`, {signal: this.abortSignal});
+    let items = await response.json();
+    return (state: State) => state.copy({items});
+  }
+}
+```
+
+&nbsp;
+
+## Throttle
 
 To prevent an action from running too frequently, you can add a `throttle` property to your
-action class. This means that once the action runs it's considered _fresh_, and it won't run
-again for a set period of time, even if you dispatch it again during that period.
-After this period ends, the action is considered _stale_ and is ready to run again.
+action class. The action then runs at most once per throttle period. If you dispatch it again
+during that period, the new dispatch is aborted. After the period ends, the next dispatch runs,
+and starts a new period.
 
 ```tsx
 class LoadPrices extends Action {    
@@ -437,19 +475,124 @@ class LoadPrices extends Action {
 
 &nbsp;
 
-## OptimisticUpdate (soon)
+## Fresh
 
-To provide instant feedback when an action saves data to the server, you can use an optimistic update.
-This feature changes the state immediately, before the server confirms that the update succeeded.
-If the server update fails, the state is changed back. You can also show a notification to the user.
+To avoid reloading the same information too often, add a `fresh` property to your action class.
+When the action runs, its result is considered fresh for that period, and dispatching it again
+during that period is aborted. After the period ends, the data is stale, and the next dispatch
+runs and starts a new period.
 
 ```tsx
-class SaveName extends Action {    
-  optimisticUpdate = { ... } 
-   
-  async reduce() { ... } 
+class LoadPrices extends Action {
+  fresh = 5000 // Milliseconds
+
+  async reduce()  {
+    let result = await loadJson('https://example.com/prices');
+    return (state: State) => state.copy({prices: result});
+  }
 }
 ```
+
+&nbsp;
+
+## Sequential
+
+To make actions run one at a time, in the exact order they were dispatched, add the
+`sequential` property to your action class and set it to `true`. Each dispatched action
+waits until all the actions dispatched before it have finished, and only then runs.
+
+```tsx
+class SaveItem extends Action {
+  sequential = true;
+  constructor(readonly item: Item) { super(); }
+
+  async reduce() {
+    await saveItem(this.item);
+    return null;
+  }
+}
+```
+
+&nbsp;
+
+## Polling
+
+To periodically dispatch an action at a fixed interval, add a `poll` property to your action
+class, and say which action each tick dispatches. Dispatch it with `Poll.start` to start
+polling, and with `Poll.stop` to stop polling.
+
+```tsx
+class LoadPrices extends Action {
+  constructor(readonly poll = Poll.once) { super(); }
+  pollInterval = 5000; // Milliseconds
+  createPollingAction() { return new LoadPrices(); }
+
+  async reduce() {
+    let result = await loadJson('https://example.com/prices');
+    return (state: State) => state.copy({prices: result});
+  }
+}
+
+dispatch(new LoadPrices(Poll.start)); // Start polling.
+dispatch(new LoadPrices(Poll.stop)); // Stop polling.
+```
+
+&nbsp;
+
+## OptimisticCommand
+
+To provide instant feedback when an action sends a command to the server (like adding a todo,
+or sending a message), extend `OptimisticCommand`. It changes the state immediately, before the server
+confirms that the command succeeded. If the command fails, the state is changed back, and the
+error is shown to the user. It can also reload the value from the server.
+
+```tsx
+class AddTodo extends OptimisticCommand<State, Todo[]> {
+  constructor(readonly todo: Todo) { super(); }
+
+  optimisticValue() { return [...this.state.todos, this.todo]; }
+  getValueFromState(state: State) { return state.todos; }
+  applyValueToState(state: State, todos: Todo[]) { return state.copy({ todos }); }
+  sendCommandToServer() { return api.addTodo(this.todo); }
+  reloadFromServer() { return api.loadTodos(); }
+}
+```
+
+&nbsp;
+
+## OptimisticSync
+
+For rapid toggles (like a "like" button), extend `OptimisticSync`. Every dispatch changes the
+state immediately, but only one request per key is sent to the server at a time. When the
+request finishes, if the state changed meanwhile, a follow-up request sends the latest value,
+until the state stabilizes. This keeps the UI responsive, while minimizing server load.
+
+```tsx
+class ToggleLike extends OptimisticSync<State, boolean> {
+  constructor(readonly itemId: string) { super(); }
+
+  optimisticSyncKeyParams() { return this.itemId; }
+  valueToApply() { return !this.state.isLiked(this.itemId); }
+  applyOptimisticValueToState(state: State, liked: boolean) { return state.setLiked(this.itemId, liked); }
+  getValueFromState(state: State) { return state.isLiked(this.itemId); }
+  sendValueToServer(liked: boolean) { return api.setLiked(this.itemId, liked); }
+}
+```
+
+&nbsp;
+
+## OptimisticSyncWithPush and ServerPush
+
+If your app also receives server pushes (WebSockets, Server-Sent Events, Firebase) that may
+change the same values, and more than one device can change them, extend
+`OptimisticSyncWithPush` instead of `OptimisticSync`, and apply the pushes with an action that
+extends `ServerPush`. They track revisions, so that stale or out-of-order pushes are ignored,
+local changes are not overwritten by older pushes, and the last write wins across devices.
+
+&nbsp;
+
+See all the features, and which ones can be combined, in
+[Action features](/react/advanced-actions/action-features).
 
 &nbsp;
 

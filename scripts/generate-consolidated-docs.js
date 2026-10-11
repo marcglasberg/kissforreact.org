@@ -21,6 +21,7 @@ const SECTION_ORDER = [
   { path: 'advanced-actions', title: 'Advanced Actions', isDirectory: true },
   { path: 'testing', title: 'Testing', isDirectory: true },
   { path: 'miscellaneous', title: 'Miscellaneous', isDirectory: true },
+  { path: 'linter.md', title: 'Linter' },
 ];
 
 // Define the order within tutorial section
@@ -252,7 +253,7 @@ function extractKeywords(content) {
       'checkInternet',
       'debounce', 
       'nonReentrant',
-      'optimisticUpdate',
+      'OptimisticCommand',
       'retry',
       'throttle'
     ]
