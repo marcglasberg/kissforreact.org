@@ -92,5 +92,23 @@ export class TodoList {
 }
 ```
 
-Finally, here is the code that actually toggles the todo item.
-It iterates over the todo items and toggles the one that matches the item we want.
+The `toggleTodo()` function iterates over the todo items, and toggles the one that matches
+the item we want. To toggle it, it calls the `toggleCompleted()` function of the `TodoItem` class.
+
+Finally, here is the code that actually toggles the todo item:
+
+```tsx
+export class TodoItem {
+  constructor(public text: string, public completed: boolean = false) {}
+
+  toggleCompleted() {
+    return new TodoItem(this.text, !this.completed);
+  }
+
+  ...
+}
+```
+
+As you can see, the business logic is in the state classes `TodoList` and `TodoItem`.
+The component only dispatches the action, and the action only calls the state classes.
+This also makes the business logic easy to test, since you can test the state classes directly.

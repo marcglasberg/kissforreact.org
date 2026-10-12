@@ -96,7 +96,10 @@ expect(values).toEqual([2, 9, 5]);
 ```ts
 let types: string[] = [];
 
-for (const actionType of [AddAction, IncrementAction, LoadUserAction]) {
+const actionTypes: Array<new (...args: any[]) => KissAction<State>> =
+  [AddAction, IncrementAction, LoadUserAction];
+
+for (const actionType of actionTypes) {
   store.mocks.add(actionType, (action) => {
     types.push(action.constructor.name);
     return action;

@@ -20,9 +20,14 @@ know if an action is currently being processed, if it just failed, and eventuall
 Thankfully, this is very easy to do with Kiss, by using the following functions:
 
 * `isWaiting(actionType)`: Is true if the given action type is currently being processed.
-* `isFailed(actionType)`: Is true if the given action type just failed.
-* `exceptionFor(actionType)`: Returns the exception that caused the action to fail.
+* `isFailed(actionType)`: Is true if the given action type just failed with a `UserException`.
+* `exceptionFor(actionType)`: Returns the `UserException` that caused the action to fail.
 * `clearExceptionFor(actionType)`: Clears the exception that caused the action to fail.
+
+Note `isFailed` and `exceptionFor` only consider `UserException`s.
+If the action fails with any other error, `isFailed` is false, and `exceptionFor` returns `null`.
+If you want them to consider other errors too, your action can turn them into `UserException`s
+with its `wrapError()` method, as shown [below](#combining-iswaiting-and-isfailed).
 
 ## In actions
 
@@ -30,7 +35,7 @@ In actions, we have direct access to the process phase functions above by
 using `this.isWaiting`, `this.isFailed`, `this.exceptionFor` and `this.clearExceptionFor`.
 
 For example, suppose we want to create a `SellAction` action that sells a stock.
-However, if there is already a `SellAction` or `BuyAction` action currently running,
+However, if there is already a `BuyAction` action currently running,
 we want to show an error message instead. This is how you can do it:
 
 ```ts    
@@ -39,9 +44,8 @@ class SellAction extends Action {
 
   async reduce() {
   
-    // Make sure we're not in the middle of another sell or buy process 
-    if (this.isWaiting(SellAction) 
-        || this.isWaiting(BuyAction)) {
+    // Make sure we're not in the middle of a buy process 
+    if (this.isWaiting(BuyAction)) {
       throw new UserException('Please wait for the current order to complete.');
     }
     
@@ -52,6 +56,27 @@ class SellAction extends Action {
       state.copy({
         stocks: state.stocks.setAmount(this.stock, amount)
       });
+  }
+}
+```
+
+Note we can't use `this.isWaiting(SellAction)` to check if another `SellAction` is running.
+The running action is itself a `SellAction`, so that would always be true.
+
+If you also don't want two `SellAction`s running at the same time,
+add [nonReentrant](../advanced-actions/control-features#nonreentrant) to the action.
+Then, if a `SellAction` is dispatched while another one is still running,
+the new one is aborted. It's silently ignored, as if it had never been dispatched:
+
+```ts
+class SellAction extends Action {
+  constructor(public stock: string) { super(); }
+  
+  // Aborts the action if another SellAction is still running
+  nonReentrant = true;
+
+  async reduce() {
+    ...
   }
 }
 ```
@@ -105,7 +130,8 @@ function MyComponent() {
 
 ## Show an error message
 
-Hook `useIsFailed(actionType)` returns true if the given action type just failed.
+Hook `useIsFailed(actionType)` returns true if the given action type just failed
+with a `UserException`.
 By using this hook, you can show an error message when an action fails:
 
 ```tsx
@@ -126,7 +152,7 @@ function MyComponent() {
 };
 ```
 
-If the action failed with a `UserException`, you can get this error by doing
+You can also get the `UserException` by doing
 `let error = useExceptionFor(actionType)` and then get the error message
 to eventually show it in the UI.
 
@@ -152,7 +178,26 @@ function MyComponent() {
 ## Combining isWaiting and isFailed
 
 Let's suppose we've got an async action that loads some text from a server.
-You can show a spinner while the action is being processed,
+Loading may fail with any error, for example when there is no internet.
+Since `isFailed` only considers `UserException`s, the action uses `wrapError()`
+to turn any error into a `UserException`:
+
+```ts
+class LoadText extends Action {
+
+  async reduce() {
+    let response = await fetch('https://www.example.com/text');
+    let text = await response.text();
+    return (state: State) => state.copy({someText: text});
+  }
+
+  wrapError(error: any) {
+    return new UserException('Loading failed.', {hardCause: error});
+  }
+}
+```
+
+Now you can show a spinner while the action is being processed,
 and show an error message if the action fails:
 
 ```tsx

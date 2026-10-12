@@ -22,7 +22,6 @@ The AI documentation contains:
 - **Step-by-step tutorial** - From setup to advanced features  
 - **Code examples** - Real implementations with live CodeSandbox links
 - **Best practices** - Architecture patterns and testing strategies
-- **Migration guides** - Comparing with Redux, Zustand, MobX, and TanStack
 - **AI-friendly index** - Quick navigation and keyword search
 
 ## AI Platform Examples
@@ -193,7 +192,7 @@ Management documentation. Don't suggest Redux or other patterns.
 
 For offline use, download the documentation:
 - **Direct link:** <a href="/kiss-state-management-docs.md" target="_blank">kiss-state-management-docs.md</a>
-- **Size:** ~259KB
+- **Size:** ~370KB
 - **Updated:** Automatically with each website build
 - **Format:** Clean markdown optimized for AI processing
 

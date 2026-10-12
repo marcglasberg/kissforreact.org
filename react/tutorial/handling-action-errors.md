@@ -28,7 +28,7 @@ if (currentTodoList.ifExists(this.text)) {
 As you can see above, we can provide both a **message** and an **error text** in the error:
 
 ```tsx
-UserException("message", errorText: "errorText")
+new UserException("message", { errorText: "errorText" })
 ```
 
 We want to accomplish two things:
@@ -72,8 +72,15 @@ const userExceptionDialog: ShowUserException =
 // Alternative 2: Using the MUI library (mui.com) 
 export const userExceptionDialog: ShowUserException = (exception: UserException, _count: number, next: () => void) => {
   const container = document.getElementById('dialog-root');
-  if (!container) return;
-  const root = createRoot(container!);
+
+  // If there's nowhere to show the dialog, call next() anyway,
+  // or no other errors will be shown.
+  if (!container) {
+    next();
+    return;
+  }
+
+  const root = createRoot(container);
   const closeDialog = () => {
     root.unmount();
     next();

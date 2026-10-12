@@ -23,7 +23,11 @@ The status can tell us if the action finished with or without errors:
 * `status.isCompletedOk` is `true` if the action finished without errors (in more detail, if the
   action's methods `before` and `reduce` finished without throwing any errors).
 
-* `status.isCompletedFailed` is equal to `!status.isCompletedOk`.
+* `status.isCompletedFailed` is `true` if the action finished with errors.
+
+Note both `isCompletedOk` and `isCompletedFailed` are `false` while the action is still running,
+or if it hasn't been dispatched yet. So `isCompletedFailed` is the same as
+`isCompleted && !isCompletedOk`.
 
 And then, there are two errors we can read:
 
@@ -55,25 +59,47 @@ expect(error.message).toBe("You can't do this.");
 
 Since `UserException`s don't represent bugs in the code, 
 Kiss puts them into the store's `userExceptionsQueue` queue. 
-In other words, this queue is a list of `UserException`s that were thrown by actions, 
-and it will be consumed by the UI (usually a modal error dialog) to show the user.
+They are then shown to the user, one at a time, by the store's `showUserException` function
+(usually a modal error dialog). 
 
-If you test includes actions that emit a lot of `UserException` errors,
-you may wait until they all enter the error queue, and then check the queue itself:
+Each `UserException` is removed from the queue when it's shown. 
+When the UI calls `next()`, the next one in the queue is shown.
+In other words, this queue holds the `UserException`s that were thrown by actions,
+but were not shown to the user yet.
+
+Note that, by default, `showUserException` only logs the error and calls `next()` right away,
+so the queue is usually empty. 
+
+If you want to check the queue in your test, you can create the store with
+a `showUserException` that never calls `next()`. 
+This way, the first `UserException` is shown, and the others stay in the queue, 
+in the order they were thrown:
 
 ```ts
-let status = await store.dispatchAndWaitAll([
+let shown: UserException[] = [];
+
+const store = new Store<State>({
+  initialState: new State(),
+  
+  // Never calls next(), so the first error stays shown.
+  showUserException: (exception, count, next) => { shown.push(exception); },
+});
+
+await store.dispatchAndWaitAll([
   new MyAction1(), 
   new MyAction2(), 
   new MyAction3()
 ]);
 
-let errors = store.userExceptionsQueue;
+// The first error was shown.
+expect(shown.length).toBe(1);
+expect(shown[0].message).toBe("You can't do this.");
 
-expect(errors.length).toBe(3);
-expect(errors[0].message).toBe("You can't do this.");
-expect(errors[1].message).toBe("You can't do that.");
-expect(errors[2].message).toBe("You can't do the other thing.");
+// The other errors are waiting in the queue.
+let errors = store.userExceptionsQueue;
+expect(errors.length).toBe(2);
+expect(errors[0].message).toBe("You can't do that.");
+expect(errors[1].message).toBe("You can't do the other thing.");
 ```
 
  

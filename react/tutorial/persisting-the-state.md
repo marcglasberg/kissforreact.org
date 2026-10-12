@@ -139,7 +139,7 @@ sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-ori
 
 ## Implementing your own serializer
 
-If instead of using the provided `ClassSerialized` you decide to implement your own 
+If instead of using the provided `ClassPersistor` you decide to implement your own 
 serializer, the following information may be useful for you.
 
 In JavaScript there are two types of objects:
@@ -155,8 +155,8 @@ you have a plain JavaScript object, not an instance of a class.
 
 These packages will help you transform plain JavaScript objects into ES6 classes: 
 
-* [esserializer](https://www.npmjs.com/package/esserializer) - This is the package used internally
-  by the `ClassSerialized`. ESSerializer is a JavaScript serialization and deserialization utility,
+* [esserializer](https://www.npmjs.com/package/esserializer) - The `ClassPersistor` uses an adapted
+  copy of this package, which is included in Kiss. ESSerializer is a JavaScript serialization and deserialization utility,
   that helps you serialize classes to JSON, and then deserialize them back to class objects,
   with all properties and methods, recursively. No eval is used, which means it doesn't introduce
   any security risks.

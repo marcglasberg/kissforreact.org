@@ -77,7 +77,7 @@ Then your test checks if the recorded information is as expected.
 
 * To stop recording, call `store.record.stop()`.
 
-* The recording itself is in `store.record.result` which contains an array of objects:
+* To get the recording itself, call `store.record.result()`, which returns an array of objects:
 
    ```ts
    [] as Array<{
@@ -100,7 +100,7 @@ And finally, `StartLoginAction` finishes, adding the new user to the state.
 This is how you could test this scenario using recording:
 
 ```text
-it('should create user and reset name' async () => {
+it('should create user and reset name', async () => {
 
   const store = new Store<State>({ initialState: new State() });
   
@@ -113,15 +113,14 @@ it('should create user and reset name' async () => {
 
   store.record.stop();
 
-  let expected = `
-  [
-  1. SetNameAction ini(1): State(null, '')
-  2. SetNameAction end: State(null, '') → State(null, 'John')
-  3. StartLoginAction ini(2): State(null, 'John')
-  4. ResetNameAction ini(3): State(null, 'John')
-  5. ResetNameAction end: State(null, 'John') → State(null, '')
-  6. StartLoginAction end: State(null, '') → State(User('John'), '')
-  ]`;
+  let expected = `[
+0. SetNameAction ini(1): State(null, '')
+1. SetNameAction end: State(null, '') → State(null, 'John')
+2. StartLoginAction ini(2): State(null, 'John')
+3. ResetNameAction ini(3): State(null, 'John')
+4. ResetNameAction end: State(null, 'John') → State(null, '')
+5. StartLoginAction end: State(null, '') → State(User('John'), '')
+]`;
 
   expect(store.record.toString()).toBe(expected);
 });
@@ -133,7 +132,7 @@ that's not recommended for most cases, as those tests can be brittle and hard to
 For example, the above actions could be better tested like this:
 
 ```text
-it('should create user and reset name' async () => {
+it('should create user and reset name', async () => {
 
   const store = new Store<State>({ initialState: new State() });
   

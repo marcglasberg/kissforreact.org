@@ -15,8 +15,8 @@ It represents errors that are **not bugs** in the code,
 but rather something that the user can fix.
 
 In other words, if something wrong happens in an action,
-you can `throw new UserException('Some suitable error message')` to automatically
-open a dialog and show a message to the user.
+you can `throw new UserException('Some suitable error message')` to show a message
+to the user, for example in a dialog (see below how to set it up).
 
 ## Example
 
@@ -118,8 +118,15 @@ const userExceptionDialog: ShowUserException =
 // Alternative 2: Using the MUI library (mui.com) 
 export const userExceptionDialog: ShowUserException = (exception: UserException, _count: number, next: () => void) => {
   const container = document.getElementById('dialog-root');
-  if (!container) return;
-  const root = createRoot(container!);
+
+  // If there's nowhere to show the dialog, call next() anyway,
+  // or no other errors will be shown.
+  if (!container) {
+    next();
+    return;
+  }
+
+  const root = createRoot(container);
   const closeDialog = () => {
     root.unmount();
     next();

@@ -219,12 +219,13 @@ Kiss will call these functions at the right time, so you don't need to worry abo
 * Even if you have a non-zero throttle period, sometimes you may want to save the state immediately,
   for some reason. You can do that by dispatching the built-in `PersistAction`
   with `dispatch(new PersistAction());`. This will ignore the throttle period and
-  call `persistDifference()` right away to save the current state.
+  call `persistDifference()` right away to save the current state. If a save is running,
+  the state is saved as soon as it finishes, still ignoring the throttle period.
 
 ## Persistence errors
 
 Saving the state may fail. For example, the disk may be full, or the storage may not be
-available. Kiss never lets these errors crash your app. Instead:
+available. This is what happens:
 
 * If `persistDifference()` throws an error, the state it was trying to save is **not**
   considered saved. Kiss doesn't retry the save by itself, but the next time the state changes,
@@ -245,19 +246,20 @@ available. Kiss never lets these errors crash your app. Instead:
   }
   ```
 
-* Then, if the error is a `UserException`, it's shown to the user, just like a
-  `UserException` thrown by an action.
-
-* Finally, the error is given to the store's
+* Then, the error is given to the store's
   [errorObserver](../advanced-actions/errors-thrown-by-actions#error-observer),
-  with a `null` action. Since there is no `dispatch` call to throw the error to,
-  returning `true` logs the error with `Store.log()`, and returning `false` ignores it.
-  If you didn't define an `errorObserver`, errors that are not `UserException`s are logged
-  with `Store.log()`.
+  with a `null` action. It returns the error to use: the same error, a different error,
+  or `null` to ignore it. If you didn't define an `errorObserver`, the error is used unaltered.
+
+* Finally, if the error is a `UserException`, it's shown to the user, just like a
+  `UserException` thrown by an action. Any other error is thrown as an
+  **unhandled promise rejection**, since there is no `dispatch` call to throw it to.
+  If you don't want that, return `null` from the `errorObserver`
+  (for example, after logging the error).
 
 Errors thrown by `readState()` when the app starts, and by the `deleteState()` and
-`saveInitialState()` that follow it, also go to the `errorObserver` (they don't go through
-`wrapError()`).
+`saveInitialState()` that follow it, are logged with `Store.log()`. They don't go through
+`wrapError()`, but then they go to the `errorObserver` and are treated the same way.
 
 Sometimes your persistor can deal with a problem by itself, but you still want to let
 the user know about it. In this case, don't throw. Instead, report the error with `addError()`.
@@ -403,8 +405,13 @@ To protect you, the `ClassPersistor` checks this when it's created.
 If class names are being minified, and some class in `classesToSerialize`
 has no `typeName` (see below), it throws a `StoreException`.
 It also throws if two different classes would be saved under the same name.
-Note this can only happen in production builds, since development builds are not minified,
-so make sure to test a production build of your app before releasing it.
+Built-in classes, like `Date`, are not checked, since they are not saved by their class name.
+
+Note that this normally only happens in production builds, since development builds are not
+minified, so make sure to test a production build of your app before releasing it.
+The exception is a class with no `typeName` whose name looks minified
+(one or two characters, starting with a lowercase letter, `_` or `$`, like `e` or `ab`).
+That class makes the `ClassPersistor` throw in development builds too.
 
 There are two ways to fix this. You can use either one, or both.
 
@@ -606,4 +613,8 @@ However, you can still use the persistor **indirectly** through the store:
   device disk.
 
 * `getLastPersistedStateFromPersistor()` gets the last state that was saved by the Persistor.
+
+If a save is running, the first three wait for it to finish first. Otherwise, the save could
+finish later and overwrite what they did. State changes made while they run are saved after
+they finish.
 

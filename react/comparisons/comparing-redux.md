@@ -205,12 +205,14 @@ class Decrement extends Action {
 
 * With Kiss, to show spinners and error messages you can simply
   use [useIsWaiting](../tutorial/async-actions#adding-a-spinner)
-  and [useIsFailed](../tutorial/async-actions#combining-iswaiting-and-isfailed):
+  and [useIsFailed](../tutorial/async-actions#combining-iswaiting-and-isfailed).
+  Note `useIsFailed` and `useExceptionFor` only consider actions that failed
+  with a `UserException`:
 
   ```ts title="Kiss"
   let isLoading = useIsWaiting(SomeAction);
   let isFailed = useIsFailed(SomeAction);
-  let errorText = useExceptionFor(SomeAction)?.errorText ?? '';
+  let errorMessage = useExceptionFor(SomeAction)?.message ?? '';
 
   <div>
     <button
@@ -218,7 +220,7 @@ class Decrement extends Action {
         disabled={isLoading}>
         { isLoading ? 'Loading...' : 'Do Something' }
     </button>
-    {isFailed && <div>{errorText}</div>}
+    {isFailed && <div>{errorMessage}</div>}
   </div>
   ```
 

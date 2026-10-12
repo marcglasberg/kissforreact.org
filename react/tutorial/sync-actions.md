@@ -124,7 +124,8 @@ Kiss will catch the exception and handle it properly:
 
 * The action will abort. The reducer will not return a new state, and the store's state will not
   be updated
-* A dialog will pop up with the error message, automatically
+* The error message will be shown to the user. By default, it's only logged to the console,
+  but we'll see in the next page how to [show it in a dialog](handling-action-errors#show-error-messages-in-a-dialog)
 * Components can later check an error occurred by writing `useIsFailed(AddTodoAction)`
 * Components can later get a reference to the error itself by doing `useExceptionFor(AddTodoAction)`
 

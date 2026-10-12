@@ -78,7 +78,7 @@ In other words, to make `checkInternet` work properly you will need to provide y
 check for internet availability. To that end, you must override the `hasInternet` method of your
 base action, and then provide your own logic to determine if the internet is available or not.
 
-Alternatives are using the [NetInfo](https://www.npmjs.com/package/@rescript-react-native/netinfo)
+Alternatives are using the [NetInfo](https://www.npmjs.com/package/@react-native-community/netinfo)
 package for React Native, or using the [is-online](https://www.npmjs.com/package/is-online)
 package for Node.js and the browser.
 

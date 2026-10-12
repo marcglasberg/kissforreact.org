@@ -62,7 +62,7 @@ but only after a previous action has finished successfully:
 var status 
   = await store.dispatchAndWait(new BuyAction('IBM'));
 
-if (status.isCompletedOk()) {
+if (status.isCompletedOk) {
   await store.dispatch(new UpdateBalanceAction());
 }
 ```
@@ -71,7 +71,7 @@ The status is also useful in tests, to make sure some action is successful:
 
 ```tsx
 var status = await store.dispatchAndWait(new MyAction());
-expect(status.isCompletedOk()).toBe(true);
+expect(status.isCompletedOk).toBe(true);
 ```
 
 Or to make sure some action throws an error:
@@ -116,7 +116,7 @@ let [buyAction, sellAction]
 expect(buyAction.status.originalError).toBeInstanceOf(UserException);
 
 // Test that sellAction completed successfully 
-expect(sellAction.status.isCompletedOk()).toBe(true)); 
+expect(sellAction.status.isCompletedOk).toBe(true); 
 ```
 
 ## Dispatch sync

@@ -365,10 +365,13 @@ You can use this returned action to check its `status`, for example, to assert i
 ```ts
 dispatch(new MyAction());
 let action = await store.waitActionType(MyAction);
-expect(action.status.isCompletedOk).toBe(false);
-expect(action.status.isCompletedFailed).toBe(true);
-expect(action.status.originalError).toBeInstanceOf(UserException);
+expect(action?.status.isCompletedOk).toBe(false);
+expect(action?.status.isCompletedFailed).toBe(true);
+expect(action?.status.originalError).toBeInstanceOf(UserException);
 ```
+
+Note the returned action may be `null`. This happens when the promise completes immediately
+(with `completeImmediately: true`), or when it times out and you passed an `onTimeout`.
 
 ## waitAnyActionTypeFinishes
 
@@ -429,12 +432,10 @@ It's not checked every time action statuses change.
 When the promise resolves, you get back the set of actions being dispatched that met the condition,
 as well as the trigger action. This may be useful in tests.
 
-:::warning
-
-Your condition function should **not** try and modify the set of actions it got in
-the `actionsInProgress` parameter. If you do, Kiss will throw an error.
-
-:::
+The `actionsInProgress` set your condition gets is a copy.
+Changing it doesn't affect the store.
+The set you get back when the promise resolves is also a copy, taken when the condition was met,
+so it doesn't change when other actions are later dispatched or finish.
 
 ## Optional parameters
 

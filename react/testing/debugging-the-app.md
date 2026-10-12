@@ -39,11 +39,15 @@ console.log(store.state);
 
 Printing the list of actions in progress to the console can be useful for debugging,
 
-You can get an array of the actions that are currently in progress by
-using `actionsInProgress()` from inside any **component**:
+The store method `actionsInProgress()` returns a `Set` with the actions that are
+currently in progress. This set is a copy, so it doesn't change when actions are later
+dispatched or finish.
+
+From inside any **component**, `useStore()` doesn't have this method,
+but you can get the `Store` object from its `store` property:
 
 ```ts
-const store = useStore();
+const { store } = useStore();
 console.log(store.actionsInProgress());
 ```
 

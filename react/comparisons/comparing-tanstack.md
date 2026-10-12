@@ -34,7 +34,7 @@ updates.
 | Local Persistence         | No             | Objects          | Objects and Classes |
 | Loading and failed states | Yes            | No               | Yes                 |
 | Deduplication             | Yes            | No               | Yes                 |
-| Smart refetches           | Yes            | No               | Yes (soon)          |
+| Smart refetches           | Yes            | No               | Yes                 |
 | Retry                     | Yes            | No               | Yes                 |
 
 ## Global local state
@@ -146,10 +146,10 @@ and then use it from there.
 TanStack Query has a `staleTime` option to control when data is considered stale and should be
 refetched. By default, all cache data is considered stale after 0 seconds, meaning queries will
 refetch their data as often as you query them. Kiss has the same default but uses
-the [throttle](../advanced-actions/control-features#throttle) feature,
+the [fresh](../advanced-actions/control-features#fresh) feature,
 so each action, not queries, decides if data should be refetched.
 
-Consider an Kiss action called `LoadText`.
+Consider a Kiss action called `LoadText`.
 Normally, it would refetch data every time it's dispatched:
 
 ```tsx
@@ -158,15 +158,18 @@ class LoadText extends Action {
 }
 ```
 
-If we add `throttle = 5000`, it will be considered fresh for 5 seconds
-and won't run again for that period, even if you dispatch it:
+If we add `fresh = 5000`, its data will be considered fresh for 5 seconds,
+and it won't run again for that period, even if you dispatch it:
 
 ```tsx
 class LoadText extends Action {
-  throttle = 5000 
+  fresh = 5000 
   reduce() { ... }
 }
 ```
+
+If the action fails, its data is not considered fresh,
+so the next dispatch runs again right away.
 
 ## Deduplication
 
@@ -207,62 +210,49 @@ class LoadText extends Action {
 ## Smart refetches
 
 Both TanStack Query and Kiss allow refetching stale data.
-TanStack Query has options like `refetchOnMount`, `refetchOnWindowFocus`, `refetchOnReconnect`,
-`refetchInterval`, and `refetchIntervalInBackground`, which are not yet present in Kiss but
-will be implemented [in the future](https://github.com/marcglasberg/kiss-for-react/issues/1).
-This is a possible API:
+TanStack Query has options like `refetchOnMount` and `refetchInterval`.
 
-```tsx
-let action = new SomeAction(); 
-
-// Start auto dispatching 
-useAutoDispatch(new SomeAction(), {
-  onMount: true,  
-  onWindowFocus: true,
-  onReconnect: true,
-  onInterval: 5000,
-  onIntervalBackground: 30000,
-});
-
-// Cancel auto dispatching for a specific action
-useAutoDispatch(action, {
-  onMount: false,  
-  onWindowFocus: false,
-  onReconnect: false,
-  onInterval: false,
-  onIntervalBackground: false,
-});
-
-// Cancel auto dispatching for all actions of the given type
-useAutoDispatch(SomeAction, {
-  onMount: false,  
-  onWindowFocus: false,
-  onReconnect: false,
-  onInterval: false,
-  onIntervalBackground: false,
-});
-
-// Cancel all auto dispatches for all actions
-cancelAutoDispatches();
-
-// Gets a map of all auto dispatches per action
-getAutoDispatches();
-```
+In Kiss, [useStoreEffect](../basics/hooks-to-dispatch-actions#dispatching-when-the-component-mounts)
+accepts `onMount`, `onDepsChange` (with its `deps`) and `onUnmount`,
+to dispatch actions when the component mounts, when some values change, and when it unmounts.
 
 For example, to dispatch action `LoadText` whenever the `TextEditorScreen` component mounts,
 but no more than once every 10 seconds:
 
 ```tsx
 function TextEditorScreen() {
-  useAutoDispatch(LoadText, {onMount: true});
+  useStoreEffect({ onMount: (store) => store.dispatch(new LoadText()) });
   ...
 }
 
 class LoadText extends Action { 
-  throttle = 10000 
+  fresh = 10000 
   reduce() { ... }
 }
 ```
+
+To refetch at regular intervals, use [polling](../advanced-actions/control-features#polling).
+For example, to refetch the text every 5 seconds while the component is mounted:
+
+```tsx
+function TextEditorScreen() {
+  useStoreEffect({
+    onMount: (store) => store.dispatch(new LoadText(Poll.start)),
+    onUnmount: (store) => store.dispatch(new LoadText(Poll.stop)),
+  });
+  ...
+}
+
+class LoadText extends Action {
+  constructor(readonly poll = Poll.once) { super(); }
+  pollInterval = 5000;
+  createPollingAction() { return new LoadText(); }
+  reduce() { ... }
+}
+```
+
+Kiss doesn't have options like `refetchOnWindowFocus` and `refetchOnReconnect`.
+If you need them, you can dispatch the action yourself when those events happen.
 
 ## Retry
 
@@ -306,7 +296,7 @@ function MyComponent() {
 ```
 
 This is how Kiss allows a component to know if a
-query [is loading or has failed](http://localhost:3000/react/basics/wait-fail-succeed):
+query [is loading or has failed](../basics/wait-fail-succeed):
 
 ```tsx
 function MyComponent() {
@@ -326,6 +316,22 @@ function MyComponent() {
       <pre>{state.text}</pre>
     </div>
   );  
+}
+```
+
+Note `useIsFailed` and `useExceptionFor` only consider `UserException`s.
+To also show other errors, like a failed fetch, the action can turn them into
+`UserException`s with its `wrapError()` method:
+
+```tsx
+class LoadText extends Action {
+  reduce() { ... }
+
+  wrapError(error: any) {
+    return (error instanceof UserException)
+      ? error
+      : new UserException('Failed to load the text.', { hardCause: error });
+  }
 }
 ```
 

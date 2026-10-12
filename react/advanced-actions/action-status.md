@@ -14,13 +14,13 @@ always reflect the state of the action at the time you read it.
 ```ts
 let action = new MyAction();
 
-let status = action.status;
-console.log(status);
+let statusBefore = action.status;
+console.log(statusBefore);
 
 store.dispatchSync(action);
 
-let status = action.status;
-console.log(status);
+let statusAfter = action.status;
+console.log(statusAfter);
 ```
 
 ## isCompleted
@@ -57,7 +57,7 @@ An example:
 ```ts
 let action = new MyAction(); 
 await store.dispatchAndWait(action);
-console.log(action.isCompletedOk);
+console.log(action.status.isCompletedOk);
 ```
 
 Better yet, you can get the status directly from the `dispatchAndWait` function:

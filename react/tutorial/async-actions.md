@@ -116,7 +116,14 @@ function AddRandomTodoButton() {
 
 You can combine the `useIsWaiting` and `useIsFailed` hooks
 to show both a spinner if the information is loading,
-and an error message if the loading fails:
+and an error message if the loading fails.
+
+Note `useIsFailed` and `useExceptionFor` only consider `UserException`s.
+This works here because our action throws a `UserException` when the response is not ok.
+Other errors, like a `fetch` that fails because there is no internet,
+are not `UserException`s, so `isFailed` would stay false.
+To also show those, the action can turn them into `UserException`s
+in its [wrapError](../advanced-actions/errors-thrown-by-actions) method.
 
 <Tabs>
 <TabItem value="rw" label="React">
@@ -126,7 +133,7 @@ function AddRandomTodoButton() {
 
   let isLoading = useIsWaiting(AddRandomTodoAction);
   let isFailed = useIsFailed(AddRandomTodoAction);
-  let errorText = useExceptionFor(AddRandomTodoAction)?.errorText ?? '';
+  let errorMessage = useExceptionFor(AddRandomTodoAction)?.message ?? '';
   const store = useStore();
 
   return (
@@ -134,12 +141,13 @@ function AddRandomTodoButton() {
       <button
           onClick={() => store.dispatch(new AddRandomTodoAction())}
           disabled={isLoading}
+          >
           { isLoading 
             ? 'Loading...' 
             : 'Add Random Todo'
           }
       </button>
-      {isFailed && <div>{errorText}</div>}
+      {isFailed && <div>{errorMessage}</div>}
     </div>
   );
 };
@@ -153,7 +161,7 @@ function AddRandomTodoButton() {
 
   let isLoading = useIsWaiting(AddRandomTodoAction);
   let isFailed = useIsFailed(AddRandomTodoAction);
-  let errorText = useExceptionFor(AddRandomTodoAction)?.errorText ?? '';
+  let errorMessage = useExceptionFor(AddRandomTodoAction)?.message ?? '';
   const store = useStore();
 
   return (
@@ -165,7 +173,7 @@ function AddRandomTodoButton() {
             : <Text>Add Random Todo</Text>
           }
       </TouchableOpacity>
-      {isFailed && <Text>{errorText}</Text>}
+      {isFailed && <Text>{errorMessage}</Text>}
     </View>
   );
 };

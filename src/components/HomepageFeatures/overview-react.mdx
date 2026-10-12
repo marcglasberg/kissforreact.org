@@ -171,10 +171,11 @@ function MyComponent() {
 
 &nbsp;
 
-To dispatch actions when the component mounts, when some values change, and when it unmounts:
+To dispatch actions when the component mounts, when some values change, and when it unmounts,
+use `useStoreEffect` instead of a `useEffect`:
 
 ```tsx
-const dispatch = useDispatch({
+useStoreEffect({
   deps: userId,
   onMount: (store) => store.dispatch(new LoadUser(userId)),
   onDepsChange: (store, oldUserId) => {
@@ -218,8 +219,8 @@ class LoadText extends Action {
 If an error occurs, you can simply **throw it**. In this case, the action will not
 change the state. Errors are caught globally and can be handled later in one central place.
 
-If you throw a `UserException`, a type provided by Kiss, a dialog or another UI element
-opens automatically and shows the error message to the user.
+If you throw a `UserException`, a type provided by Kiss, its message is shown to the user,
+in the dialog or other UI element you set up with `showUserException`.
 
 ```tsx
 class LoadText extends Action {
@@ -604,7 +605,7 @@ It supports serialization of JavaScript objects **and** ES6 class instances.
 ```tsx
 const store = createStore<State>({  
   initialState: new State(),
-  persistor: new Persistor(),
+  persistor: new MyPersistor(),
 });  
 
 // Wait for the saved state to load, then start the app.
@@ -622,7 +623,7 @@ Then verify the new state or check whether an error occurred.
 ```tsx
 class State {
   constructor(
-    public items: string[], 
+    public items: Item[], 
     public selectedItem: number
   ) {}
 }
@@ -630,12 +631,12 @@ class State {
 test('Selecting an item', async () => {
 
   const store = createStore<State>({      
-    initialState: new State(['A', 'B', 'C'], -1)
+    initialState: new State([{id: 1, text: 'A'}, {id: 2, text: 'B'}, {id: 3, text: 'C'}], -1)
   });
   
   // Should select item 2
   await store.dispatchAndWait(new SelectItem(2));
-  expect(store.state.selectedItem).toBe('B');
+  expect(store.state.selectedItem).toBe(2);
   
   // Fail to select item 42
   let status = await store.dispatchAndWait(new SelectItem(42));    
@@ -650,31 +651,40 @@ test('Selecting an item', async () => {
 If you are the team lead, you can set up the app's infrastructure in one central place,
 so developers can focus on business logic.
 
-You can add a `stateObserver` to collect app metrics, an `errorObserver` to log errors,
-an `actionObserver` to log information to the console during development,
-and a `globalWrapError` to change errors before they are handled.
+You can add a `stateObserver` to collect app metrics, an `actionObserver` to log
+information to the console during development, and an `errorObserver` to log errors,
+and to change them before they are handled.
 
 ```tsx
 const store = createStore<string>({    
+  initialState: '',
   stateObserver: (action, prevState, newState, error, count) => { ... },
-  errorObserver: (error, action, store) => { ... },
   actionObserver: (action, count, ini) => { ... },
-  globalWrapError: (error) => { ... }
+  errorObserver: ({ error, originalError, action, store }) => { ... },
 });  
 ```
 
 &nbsp;
 
-For example, here we handle `FirestoreError` errors thrown by Firebase.
-We convert them into `UserException` errors, which are built-in types that
-automatically show a message to the user in an error dialog:
+The `errorObserver` gets all errors thrown by your actions, and also the errors of the
+persistor (with a `null` action). It returns the error to use: the same one, a different one,
+or `null` to swallow it. Then, a `UserException` is shown to the user (by the
+`showUserException` you set up), and any other error is thrown.
+
+For example, here we convert the `FirestoreError` errors thrown by Firebase into
+`UserException` errors, which are built-in types that show a message to the user.
+Other errors are logged, and swallowed in production:
 
 ```tsx
-globalWrapError: (error: any) => {
-   return (error instanceof FirestoreError)
-      ? new UserException('Error connecting to Firebase')
-      : error;
-   }  
+errorObserver: ({ error, action }) => {
+  if (error instanceof FirestoreError)
+    return new UserException('Error connecting to Firebase').withHardCause(error);
+
+  if (error instanceof UserException) return error;
+
+  Logger.error(`Got ${error} in ${action ?? 'the persistor'}.`);
+  return inProduction() ? null : error;
+}
 ```
 
 &nbsp;
@@ -701,8 +711,10 @@ and helper methods to find information.
 
 ```tsx
 class State {  
-  items: Item[];    
-  selectedItem: Item;
+  constructor(
+    public items: Item[],    
+    public selectedItem: number
+  ) {}
 }
 
 export abstract class Action extends KissAction<State> {
@@ -713,7 +725,7 @@ export abstract class Action extends KissAction<State> {
   
   // Selectors 
   findById(id: number) { return this.items.find((item) => item.id === id); }
-  get selectedIndex() { return this.items.indexOf(this.selectedItem); }
+  get selectedIndex() { return this.items.findIndex((item) => item.id === this.selectedItem); }
   searchByText(text: string) { return this.items.find((item) => item.text.includes(text)); }
 }
 ```
@@ -728,8 +740,8 @@ class SelectItem extends Action {
 
   reduce() {
     let item = this.findById(this.id);
-    if (item === undefined) throw new Error('Item not found');
-    return this.state.copy({selectedItem: item});
+    if (item === undefined) throw new UserException('Item not found');
+    return new State(this.items, item.id);
   }
 }
 ```

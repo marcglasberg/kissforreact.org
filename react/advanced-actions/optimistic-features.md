@@ -202,7 +202,9 @@ It gets the initial value, the optimistic value, and the error.
 For example, to keep the new todo, but mark it as failed:
 
 ```tsx
-rollbackState({ initialValue, optimisticValue, error }) {
+rollbackState({ initialValue, optimisticValue, error }: {
+  initialValue: Todo[], optimisticValue: Todo[], error: any
+}) {
   return this.state.copy({ todos: this.state.todos.map(t => 
     t.id === this.todo.id ? t.copy({ failed: true }) : t) 
   });
@@ -216,7 +218,9 @@ the initial value, the optimistic value, and the error. For example, to always r
 even if the value was changed in the meantime:
 
 ```tsx
-shouldRollback({ currentValue, initialValue, optimisticValue, error }) {
+shouldRollback({ currentValue, initialValue, optimisticValue, error }: {
+  currentValue: Todo[], initialValue: Todo[], optimisticValue: Todo[], error: any
+}) {
   return true;
 }
 ```
@@ -255,7 +259,9 @@ shouldReload() {
   return true;
 }
 
-shouldApplyReload({ currentValue, lastAppliedValue }) {
+shouldApplyReload({ currentValue, lastAppliedValue }: {
+  currentValue: Todo[], lastAppliedValue: Todo[]
+}) {
   return currentValue === lastAppliedValue;
 }
 ```
@@ -524,8 +530,14 @@ So, make sure `getValueFromState` returns the same object you applied, or overri
 the value that was sent, and the number of requests already sent by this action:
 
 ```tsx
-ifShouldSendAnotherRequest({ stateValue, sentValue, requestCount }) {
-  return !stateValue.equals(sentValue);
+class SaveSettings extends OptimisticSync<State, Settings> {
+  ...
+
+  ifShouldSendAnotherRequest({ stateValue, sentValue, requestCount }: {
+    stateValue: Settings, sentValue: Settings, requestCount: number
+  }) {
+    return !stateValue.equals(sentValue);
+  }
 }
 ```
 

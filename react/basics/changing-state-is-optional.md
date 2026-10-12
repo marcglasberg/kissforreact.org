@@ -32,7 +32,7 @@ class GetAmount extends Action {
     return (state: State) => 
       (amount == 0) 
         ? null
-        : state.copy({counter: state.counter + amount}));        
+        : state.copy({counter: state.counter + amount});        
   }
 }
 ```

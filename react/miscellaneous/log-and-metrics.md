@@ -50,7 +50,7 @@ Note the `saveMetrics` function above is a placeholder for your actual metrics s
 
 The `stateObserver` is a function called for all dispatched actions,
 right after the reducer returns, before the action's `after()` method,
-before the action's `wrapError()`, and before the `globalWrapError()`.
+before the action's `wrapError()`, and before the `errorObserver`.
 
 Its parameters are:
 

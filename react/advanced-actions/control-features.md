@@ -281,7 +281,7 @@ For example, a component may load some information when it mounts:
 
 ```tsx
 function MyScreen() {
-  useDispatch({ onMount: (store) => store.dispatch(new LoadInformation()) });
+  useStoreEffect({ onMount: (store) => store.dispatch(new LoadInformation()) });
   const information = useSelect((state: State) => state.information);
 
   return <div>Information: {information}</div>;
