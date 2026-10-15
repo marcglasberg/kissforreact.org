@@ -118,11 +118,11 @@ You can combine the `useIsWaiting` and `useIsFailed` hooks
 to show both a spinner if the information is loading,
 and an error message if the loading fails.
 
-Note `useIsFailed` and `useExceptionFor` only consider `UserException`s.
-This works here because our action throws a `UserException` when the response is not ok.
+Note `useIsFailed` is true for any error, but `useExceptionFor` only returns `UserException`s.
+Our action throws a `UserException` when the response is not ok, so it has a message.
 Other errors, like a `fetch` that fails because there is no internet,
-are not `UserException`s, so `isFailed` would stay false.
-To also show those, the action can turn them into `UserException`s
+are not `UserException`s: `isFailed` is still true, but `errorMessage` would be empty.
+To give those a message too, the action can turn them into `UserException`s
 in its [wrapError](../advanced-actions/errors-thrown-by-actions) method.
 
 <Tabs>

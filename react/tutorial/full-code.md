@@ -11,6 +11,16 @@ in [Kiss's GitHub repository](https://github.com/marcglasberg/kiss-for-react):
 * [Todo List app for **React Web**](https://github.com/marcglasberg/kiss-for-react/tree/main/examples/todo-app-example)
 * [Todo List app for **React Native**](https://github.com/marcglasberg/kiss-for-react/tree/main/examples/TodoAppReactNative)
 
+The web and the native apps share the same business code. The "Add Random Todo" button of
+both gets a todo from the [DummyJSON API](https://dummyjson.com), the same API the tutorial
+uses, to show an action that calls an API, with a spinner while it loads and an error dialog if
+it fails.
+
+There is also a more advanced version of the web app, for **Next.js** with server-side
+rendering: the todos live on the server, the page opens with them already rendered, and every
+change goes to the server. It's covered at the end of the docs, in
+[Server-side rendering](../miscellaneous/server-side-rendering.md).
+
 ## Tutorial code
 
 As a reference, the following is the full code of the web app we built in this tutorial,

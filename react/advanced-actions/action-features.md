@@ -136,6 +136,12 @@ running, but stopping a retrying action releases its key.
 
 It's also called when the store is shut down with `store.setShutDown(true)`.
 
+Note it doesn't touch the app's own timers and listeners, kept in the
+[store props](../miscellaneous/store-props). To dispose those on logout, use
+`store.logOut({ disposeProps: true })`. To end the store, when the app finishes or at the end
+of each test, call [`store.dispose()`](../miscellaneous/store-props#disposing-the-store),
+which clears the internal action props and disposes the store props.
+
 <hr></hr>
 
 All features are explained in detail in the following pages:

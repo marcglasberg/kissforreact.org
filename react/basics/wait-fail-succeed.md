@@ -20,14 +20,14 @@ know if an action is currently being processed, if it just failed, and eventuall
 Thankfully, this is very easy to do with Kiss, by using the following functions:
 
 * `isWaiting(actionType)`: Is true if the given action type is currently being processed.
-* `isFailed(actionType)`: Is true if the given action type just failed with a `UserException`.
+* `isFailed(actionType)`: Is true if the given action type just failed, with any error.
 * `exceptionFor(actionType)`: Returns the `UserException` that caused the action to fail.
-* `clearExceptionFor(actionType)`: Clears the exception that caused the action to fail.
+* `clearExceptionFor(actionType)`: Clears the failed state of the action.
 
-Note `isFailed` and `exceptionFor` only consider `UserException`s.
-If the action fails with any other error, `isFailed` is false, and `exceptionFor` returns `null`.
-If you want them to consider other errors too, your action can turn them into `UserException`s
-with its `wrapError()` method, as shown [below](#combining-iswaiting-and-isfailed).
+Note `isFailed` is true for any error, but `exceptionFor` only returns `UserException`s.
+If the action fails with some other error, `isFailed` is true, but `exceptionFor` returns `null`.
+If you want an error message for those errors too, your action can turn them into
+`UserException`s with its `wrapError()` method, as shown [below](#combining-iswaiting-and-isfailed).
 
 ## In actions
 
@@ -179,8 +179,9 @@ function MyComponent() {
 
 Let's suppose we've got an async action that loads some text from a server.
 Loading may fail with any error, for example when there is no internet.
-Since `isFailed` only considers `UserException`s, the action uses `wrapError()`
-to turn any error into a `UserException`:
+`isFailed` will be true for any of them. But if you also want an error message to show,
+`exceptionFor` only returns `UserException`s, so the action uses `wrapError()`
+to turn any error into a `UserException` with a message:
 
 ```ts
 class LoadText extends Action {
@@ -243,6 +244,73 @@ when the action is dispatched again.
 You could always clear the error message explicitly by defining
 `let clearExceptionFor = useClearExceptionFor();` and then calling `clearExceptionFor(LoadText)`,
 but it's not necessary to do so before dispatching the action again.
+
+## Status per key
+
+The functions above work per action class. `useIsWaiting(LoadUser)` is true while **any**
+`LoadUser` is running, and `useIsFailed(LoadUser)` is true if **any** `LoadUser` failed.
+
+Suppose a list of users, where each row dispatches `LoadUser(userId)` to load its own user.
+With the functions above, every row would show a spinner while any one user loads.
+
+To tell the actions apart, give the action a `statusKey`. It's a getter that returns a value
+made from the action's own fields:
+
+```ts
+class LoadUser extends Action {
+  constructor(readonly userId: string) { super(); }
+
+  get statusKey() { return this.userId; }
+
+  async reduce() {
+    let user = await loadUser(this.userId);
+    return (state: State) => state.withUser(user);
+  }
+}
+```
+
+Then, pass the same value to the hooks, in the `statusKey` option. Each row now sees only its
+own user:
+
+```tsx
+function UserRow({ userId }: { userId: string }) {
+
+  const isWaiting = useIsWaiting(LoadUser, { statusKey: userId });
+  const isFailed = useIsFailed(LoadUser, { statusKey: userId });
+  const error = useExceptionFor(LoadUser, { statusKey: userId });
+  const user = useSelect((state: State) => state.users[userId]);
+
+  if (isWaiting) return <CircularProgress />;
+  if (isFailed) return <p>{error?.message ?? 'Loading failed.'}</p>;
+  return <p>{user?.name}</p>;
+}
+```
+
+The same option works in `store.isWaiting`, `store.isFailed`, `store.exceptionFor` and
+`store.clearExceptionFor`, in their `this.` versions inside actions, and in the function
+returned by `useClearExceptionFor`. Without the option, they consider all actions of the
+type, whatever their keys, as before.
+
+The key can be a string, a number, an array like `[userId, cartId]`, or a plain object.
+Arrays and plain objects are compared by content.
+
+Two rules:
+
+* **The key must always be the same.** Make it only from the fields set in the action's
+  constructor. Don't use anything that can change: the state, the current time, or a field
+  the action changes while it runs. The store reads the key when the action is dispatched,
+  when it fails, and every time `isWaiting` is asked, so a key that changes would leave an
+  old error on screen, or make the spinner stop matching the action.
+
+* **Failures stay in memory until cleared.** For `isWaiting`, nothing extra is kept. For
+  `isFailed` and `exceptionFor`, the store keeps a small record of each failure (the action
+  type, the key, and the error). Without `statusKey` there is at most one record per action
+  class. With `statusKey`, there is one record per key that failed, for example one per user
+  whose `LoadUser` failed. A record goes away when the action runs again for that key, when
+  you call `clearExceptionFor(LoadUser, { statusKey: userId })`, or when you call
+  `clearExceptionFor(LoadUser)` without a key, which clears all keys of that type.
+  `store.clearAllExceptions()` clears all types. You rarely need it, because `logOut()`,
+  `clearInternalActionProps()` and the shutdown of the store already call it.
 
 <hr></hr>
 

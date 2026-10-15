@@ -130,3 +130,19 @@ which then can be used by all your actions.
 
 The only requirement is that your actions now
 extend `Action` instead of `KissAction<State>`.
+
+## Typed getters for the dependencies
+
+The base action is also where you declare typed getters for the store's
+[environment, dependencies and configuration](../miscellaneous/dependency-injection), which
+are typed `unknown` in the store:
+
+```ts
+abstract class Action extends KissAction<State> {
+  get env(): Environment { return this.store.environment as Environment; }
+  get deps(): Dependencies { return this.store.dependencies as Dependencies; }
+  get config(): Config { return this.store.configuration as Config; }
+}
+```
+
+Then, your actions can write `this.deps.api.loadUser(id)`, without casts.

@@ -67,6 +67,26 @@ every time. Instead, `useObject` compares the new object with the previous one, 
 It also works with arrays: `useObject((state: State) => [state.name, state.age])`.
 In other words, when at least one of `name` or `age` changes.
 
+## How the hooks follow the store
+
+These hooks connect to the store with React's own
+[`useSyncExternalStore`](https://react.dev/reference/react/useSyncExternalStore).
+React reads the state itself, compares what each component selected, and renders only the
+components whose selection changed. Before committing a render it paused (a transition),
+React checks the state again, and renders again if it changed meanwhile, so a screen never
+shows parts of two different states at the same time.
+
+Two things follow from this:
+
+* Selectors must be **pure**: they read their `state` parameter and return the same value for
+  the same state. React may call them more than once per render, and may throw a render away.
+  Return parts of the state, not new objects (that's what `useObject` is for).
+
+* Store updates are rendered right away, with React's synchronous priority. Even if you
+  dispatch inside `startTransition`, the render that shows the new state is not a deferred
+  transition. Async actions are still async: this only says how React schedules the render
+  after the state changes.
+
 ## Try it out
 
 <iframe

@@ -159,6 +159,99 @@ which happens right after the mount. In this case, `onUnmount` is cancelled.
 Also, when `onMount` waits for the store to be ready, or `onUnmount` waits that microtask,
 even a sync error is an unhandled promise rejection.
 
+## Dispatching when the app is focused or online again
+
+The data on screen gets old while the user is on another browser tab, or offline.
+To reload it when the user comes back to the tab, or when the internet comes back,
+add `onFocus` and `onOnline` to `useStoreEffect`:
+
+```tsx
+useStoreEffect({
+  onMount: (store) => store.dispatch(new LoadPrices()),
+  onFocus: (store) => store.dispatch(new LoadPrices()),
+  onOnline: (store) => store.dispatch(new LoadPrices()),
+});
+```
+
+* `onFocus` is called when the app is focused again. In the browser, that's when the document
+  becomes visible: the user comes back to the tab, or restores the window.
+  `onBlur` is called when it loses focus.
+
+* `onOnline` is called when the app is online again, and `onOffline` when it goes offline.
+
+They are called on the transitions only, never on mount, and only while the component is
+mounted (and after `onMount` was called, so after the store is ready).
+Like the other callbacks, they get the store, see the values of the latest render,
+and are not awaited.
+
+To reload only when the data is old, give the action a
+[`fresh`](../advanced-actions/control-features#fresh) period.
+A focus within the period is then aborted silently, and the data on screen is kept.
+Without `fresh`, the action runs on every focus.
+
+### Where "focused" and "online" come from
+
+The store knows whether the app is focused and online, in `store.isFocused` and `store.isOnline`.
+In the browser, by default, the app is focused when `document.visibilityState` is not `hidden`,
+and online when `navigator.onLine` is true, following the `visibilitychange`, `online` and
+`offline` events. Where the store can't know (the server, Node, React Native), both are `true`.
+
+To use something else, give `createStore` a `focusSource` or an `onlineSource`.
+Each is a function that gets a setter to call whenever the value changes
+(and right away, with the current value, if it knows it),
+and returns a function that stops listening, called by `store.dispose()`.
+For example, in React Native:
+
+```tsx
+import { AppState } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
+
+const store = createStore<State>({
+  initialState: State.initialState,
+  focusSource: (setFocused) => {
+    setFocused(AppState.currentState === 'active');
+    const sub = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
+    return () => sub.remove();
+  },
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected === true)),
+});
+```
+
+The sources are only started when something first reads the signal: `store.isFocused`,
+`useIsFocused()`, or a `useStoreEffect` with `onFocus`. A component with `onMount` only
+doesn't make the store listen to anything.
+
+The online signal is also what the
+[`checkInternet`](../advanced-actions/internet-features#checkinternet) and
+`unlimitedRetryCheckInternet` action features check by default,
+so an `onlineSource` makes them work in React Native with no change to the actions.
+
+### Showing it in components
+
+The hooks `useIsFocused()` and `useIsOnline()` return the signals, and re-render the component
+when they change. For example, to show an "offline" banner:
+
+```tsx
+function OfflineBanner() {
+  const isOnline = useIsOnline();
+  if (isOnline) return null;
+  return <Banner>You are offline. Changes will be sent when you are back online.</Banner>;
+}
+```
+
+On the server, both are always `true`.
+
+### In tests
+
+Drive the signals by hand with `store.setFocused(false)` and `store.setOnline(false)`.
+The store then stops listening to its source, and only changes when you call them again.
+Pass `null` to listen to the source again.
+
+```tsx
+store.setFocused(false); // The user went to another tab.
+store.setFocused(true);  // The user came back: the onFocus callbacks run.
+```
+
 ## useStore
 
 Alternatively, `useStore` gives you all the dispatch methods

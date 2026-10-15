@@ -507,6 +507,17 @@ so check its documentation if the above doesn't apply to you.
 The only way to keep them is `next build --no-mangling`, which turns off the minification
 of **all** names, not only class names, and makes your JavaScript considerably larger.
 
+## Events
+
+[Events](../basics/events) (`Evt` and `EvtState`) must not fire when the app restarts: an old
+"scroll to top" from the previous session would fire as soon as the component mounts. So the
+`ClassPersistor` saves events as spent, without their value, and restores them as `Evt.spent()`
+(and `EvtState.spent()`). You don't need to list `Evt` and `EvtState` in `classesToSerialize`.
+
+If you write your own persistor, do the same: don't save the events, or restore them as
+`Evt.spent()`. A restored event is a new object that the store never saw, so if it's not spent,
+it fires.
+
 ## App lifecycle
 
 In mobile apps, you have to understand the app lifecycle to use the persistor correctly:

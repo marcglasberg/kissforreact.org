@@ -68,21 +68,18 @@ The check may pass, but network requests can still fail.
 
 ### Checking the internet connection
 
-In web environments, the default is checking the availability of the internet using
-`navigator.onLine`. However, `navigator.onLine` is not very useful, as it only tells you if
-there's a local connection, and not whether the internet is accessible. Also, this only really
-works for the web. In other environments (Node.js, React Native) the default assumes there is
-internet.
+By default, the connection checked is the **online signal of the store**, `store.isOnline`
+(see [Where "focused" and "online" come from](../basics/hooks-to-dispatch-actions#where-focused-and-online-come-from)).
+In the browser, that's `navigator.onLine`, following the `online` and `offline` events.
+However, `navigator.onLine` is not very useful, as it only tells you if there's a local
+connection, and not whether the internet is accessible. Also, this only really works for the
+web. In other environments (Node.js, React Native) the default assumes there is internet.
 
 In other words, to make `checkInternet` work properly you will need to provide your own logic to
-check for internet availability. To that end, you must override the `hasInternet` method of your
-base action, and then provide your own logic to determine if the internet is available or not.
-
-Alternatives are using the [NetInfo](https://www.npmjs.com/package/@react-native-community/netinfo)
-package for React Native, or using the [is-online](https://www.npmjs.com/package/is-online)
-package for Node.js and the browser.
-
-For an example using NetInfo, first add it to your `package.json`:
+check for internet availability. The recommended way is giving the store an `onlineSource`,
+which also feeds `useIsOnline()` and the `onOnline` callback of `useStoreEffect`.
+For example, with the [NetInfo](https://www.npmjs.com/package/@react-native-community/netinfo)
+package for React Native, first add it to your `package.json`:
 
 ```json
 "dependencies": {
@@ -90,11 +87,26 @@ For an example using NetInfo, first add it to your `package.json`:
 }
 ```
 
-Then, import it in your base action, and override the `hasInternet()` method:
+Then, give the store an `onlineSource` that listens to it:
 
 ```typescript
 import NetInfo from '@react-native-community/netinfo';
 
+const store = createStore<State>({
+  initialState: State.initialState,
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected === true)),
+});
+```
+
+The source is started when the signal is first read (for example, by the first action with
+`checkInternet`), and stopped by `store.dispose()`.
+
+Alternatively, override the `hasInternet()` method of your base action, to check the connection
+on demand each time an action needs it (for example, with the
+[is-online](https://www.npmjs.com/package/is-online) package for Node.js and the browser, or by
+pinging your own server). The override then ignores `store.isOnline`:
+
+```typescript
 export abstract class Action extends KissAction<State> {
 
    protected hasInternet(): Promise<boolean> {
@@ -103,8 +115,7 @@ export abstract class Action extends KissAction<State> {
 }
 ```
 
-The same `hasInternet()` method is also used by
-[unlimitedRetryCheckInternet](#unlimitedretrycheckinternet).
+The same check is also used by [unlimitedRetryCheckInternet](#unlimitedretrycheckinternet).
 
 ### Customizing the error
 
@@ -324,7 +335,9 @@ const store = createStore<State>({
 
 During tests, you can simulate the internet being on or off. This works for all actions that
 use `checkInternet` or `unlimitedRetryCheckInternet`, and the simulation takes precedence over
-the `hasInternet()` method, even if you override it.
+the `hasInternet()` method, even if you override it. (You can also set the online signal of the
+store with `store.setOnline(false)`, which affects the actions, `useIsOnline()` and the
+`onOnline`/`onOffline` callbacks alike, but the simulation below takes precedence over it.)
 
 **Option 1:** Set `forceInternetOnOffSimulation` on the store to affect all actions:
 

@@ -953,6 +953,31 @@ Now runs may overlap when they take longer than `pollInterval`.
 If that's a problem, add [nonReentrant](#nonreentrant), [throttle](#throttle) or
 [sequential](#sequential) to the action returned by `createPollingAction()`.
 
+### Polling only while the app is focused and online
+
+By default, the ticks only run while the app is **focused** (in the browser, the tab is visible
+and the window is not minimized) and **online**. There's no point in polling a server while the
+user is on another tab, and polling while offline would fail on every tick.
+
+A tick that comes due while the user is away waits, and runs as soon as the user comes back to
+the tab, or the internet comes back. The polling then goes on at the normal interval. A tick
+that is not yet due when the user comes back runs at its normal time. So, coming back to the
+tab refreshes the data at once if it's old. The immediate run of `Poll.start` and
+`Poll.runNowAndRestart` is not affected: it always runs.
+
+To keep polling anyway, set the options to `false` in the action that controls the polling:
+
+```tsx
+pollOnlyWhenFocused = false; // Keep polling while the user is on another tab.
+pollOnlyWhenOnline = false;  // Keep polling while offline (for an action that doesn't use the internet).
+```
+
+What "focused" and "online" mean comes from the store: `store.isFocused` and `store.isOnline`
+(see [Where "focused" and "online" come from](../basics/hooks-to-dispatch-actions#where-focused-and-online-come-from)).
+Where the store can't know (the server, Node, React Native without a `focusSource` or
+`onlineSource` in `createStore`), the app counts as focused and online, and the polling never
+pauses. In tests, use `store.setFocused(false)` and `store.setOnline(false)`.
+
 ### Poll values
 
 The `poll` property controls the behavior of each dispatch:

@@ -331,8 +331,10 @@ It's called with an object with these fields:
 * `originalError`: The error before the action's `wrapError`.
 * `action`: The action that threw the error, or `null` if the error came from the
   [persistor](../miscellaneous/persistor#persistence-errors).
-* `store`: A reference to the store. IMPORTANT: Don't use the store to
-  dispatch any actions, as this may have unpredictable results.
+* `store`: A reference to the store. Use it to read `store.environment`,
+  `store.configuration` or `store.state` (see
+  [dependency injection](../miscellaneous/dependency-injection)). IMPORTANT: Don't use the
+  store to dispatch any actions, as this may have unpredictable results.
 
 The `errorObserver` is the ideal place to log errors, as you have all the information you may
 need, including the `action` that dispatched the error, which you can use to log the action
@@ -348,28 +350,35 @@ After you log the error, you must return the error to be used:
   and will be "swallowed". This is usually what we want to do in production,
   after logging the error.
 
-For example, if you want to disable all errors in _production_, but log them;
-and you want to throw all errors during _development_ and _tests_, this is how you can do it:
+For example, if you want to disable all errors in _production_, but send them to a monitoring
+service like Sentry; and you want to throw all errors during _development_ and _tests_, pass
+the [`environment`](../miscellaneous/dependency-injection) to the store, and read it from the
+`store` in the observer:
 
 ```ts
 const store = createStore<State>({
   initialState: new State(),
-  errorObserver: ({ error, action }) => {
+  environment: Environment.production, // Here!
+  errorObserver: ({ error, action, store }) => {
 
     // In development and tests, we return the error so that it's thrown,
-    // and we can see it in the emulator/console. We also always return
+    // and we can see it in the console. We also always return
     // UserExceptions, so that they can be shown to the user.
-    if (inDevelopment() || inTests() || (error instanceof UserException)) { 
+    if (store.environment !== Environment.production || (error instanceof UserException)) { 
       return error;
     }
-    // In production, we log the error and swallow it by returning null.
+    // In production, we send the error to the monitoring service,
+    // and swallow it by returning null.
     else {
-      Logger.error(`Got ${error} in ${action ?? 'the persistor'}.`);
+      Sentry.captureException(error, { extra: { action: String(action ?? 'the persistor') } });
       return null;
     }
   },
 });
 ```
+
+The opt-in lint rule `error-observer-without-environment` reminds you to pass the
+`environment` when the store has an `errorObserver`.
 
 Note that if you return `null` for a `UserException`, it will not be shown to the user,
 and the action will not count as failed.
