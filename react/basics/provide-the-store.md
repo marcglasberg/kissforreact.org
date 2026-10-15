@@ -87,9 +87,9 @@ enough; for class instances, `Map`s and `Set`s, use your own `toJSON`/`fromJSON`
 serializer you use for persistence.
 
 On the server and while hydrating, `useIsWaiting` and `useIsFailed` are `false`,
-`useExceptionFor` is `null`, and `useIsStoreReady` is `true`: the HTML never shows an action in
-progress, a failed action, or a store that is not ready. After hydration, these hooks follow the
-live store. So, on the server, wait for your actions to finish (and for `store.ready()`, if the
+`useExceptionFor` is `null`, `useSuspense` never suspends or throws, and `useIsStoreReady` is
+`true`: the HTML never shows an action in progress, a failed action, or a store that is not
+ready. After hydration, these hooks follow the live store. So, on the server, wait for your actions to finish (and for `store.ready()`, if the
 server store has a persistor) before rendering.
 
 ## Try it out

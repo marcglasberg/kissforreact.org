@@ -24,7 +24,11 @@ const config = {
   projectName: 'kissforreact.org', // Usually your repo name.
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -57,11 +61,8 @@ const config = {
           // Please change this to your repo. Remove this to remove the "edit this page" links.
           editUrl: undefined,
         },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo. Remove this to remove the "edit this page" links.
-          editUrl: undefined,
-        },
+        // This site has no blog.
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -114,7 +115,6 @@ const config = {
             label: 'Tutorial',
             href: '/react/category/tutorial',
           },
-          // {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/marcglasberg/kiss-for-react',
             label: 'GitHub',
@@ -159,10 +159,6 @@ const config = {
           {
             title: 'More',
             items: [
-              // {
-              //   label: 'Blog',
-              //   to: '/blog',
-              // },
               {
                 label: 'GitHub',
                 href: 'https://github.com/marcglasberg/kiss-for-react',

@@ -257,7 +257,8 @@ store.setFocused(true);  // The user came back: the onFocus callbacks run.
 Alternatively, `useStore` gives you all the dispatch methods
 (`store.dispatch`, `store.dispatchSync`, `store.dispatchAll`, `store.dispatchAndWait`,
 `store.dispatchAndWaitAll` and `store.dispatchWhen`),
-and all the wait methods (`store.waitCondition`, `store.waitAllActions`, etc.).
+all the wait methods (`store.waitCondition`, `store.waitAllActions`, etc.),
+and `store.abort`, to [abort the actions](../advanced-actions/aborting-actions) of a type.
 
 For example:
 

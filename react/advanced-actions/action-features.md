@@ -30,8 +30,8 @@ class LoadText extends Action {
 ```
 
 Most features are turned on by setting a property in your action, like the ones above.
-The optimistic features are different: your action extends a Kiss base class
-(like `OptimisticCommand`) instead of your own base action.
+The optimistic features and the paged loading are different: your action extends a Kiss base
+class (like `OptimisticCommand` or `LoadPages`) instead of your own base action.
 
 ## All available features
 
@@ -52,6 +52,7 @@ The optimistic features are different: your action extends a Kiss base class
 | [OptimisticSync](./optimistic-features#optimisticsync)              | Optimistic updates with coalescing; merges rapid dispatches into one sync | Extend `OptimisticSync`             |
 | [OptimisticSyncWithPush](./optimistic-features#optimisticsyncwithpush-and-serverpush) | Like `OptimisticSync`, but with revision tracking for server pushes | Extend `OptimisticSyncWithPush` |
 | [ServerPush](./optimistic-features#optimisticsyncwithpush-and-serverpush) | Handles server-pushed updates for `OptimisticSyncWithPush`          | Extend `ServerPush`                 |
+| [LoadPages](./paged-loading)                                        | Loads a list page by page: the next, previous or first page, or all again | Extend `LoadPages`                  |
 
 ## Compatibility matrix
 
@@ -60,22 +61,23 @@ Kiss throws a `StoreException` when you dispatch an action with incompatible fea
 If you use the [Kiss linter](../linter), its `incompatible-action-features` rule also
 reports them in your editor, before you run the code.
 
-|                                 | check<br/>Internet | non<br/>Reentrant | retry | unlimited<br/>Retry<br/>Check<br/>Internet | throttle | debounce | ignore<br/>Old | fresh | Optimistic<br/>Command | Optimistic<br/>Sync | Optimistic<br/>Sync<br/>WithPush | Server<br/>Push | polling | sequential |
-|---------------------------------|:------------------:|:-----------------:|:-----:|:------------------------------------------:|:--------:|:--------:|:--------------:|:-----:|:----------------------:|:-------------------:|:--------------------------------:|:---------------:|:-------:|:----------:|
-| **checkInternet**               |         —          |        ✅         |  ✅   |                     ❌                     |    ✅    |    ✅    |       ✅       |  ✅   |           ✅           |         ✅          |                ✅                |       ❌        |    ⚠️    |     ✅     |
-| **nonReentrant**                |         ✅         |         —         |  ✅   |                     ❌                     |    ❌    |    ✅    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |    ⚠️    |     ✅     |
-| **retry**                       |         ✅         |        ✅         |   —   |                     ❌                     |    ✅    |    ❌    |       ✅       |  ✅   |           ⚠️            |         ❌          |                ❌                |       ❌        |   ❌    |     ✅     |
-| **unlimitedRetryCheckInternet** |         ❌         |        ❌         |  ❌   |                     —                      |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |   ❌    |     ❌     |
-| **throttle**                    |         ✅         |        ❌         |  ✅   |                     ❌                     |    —     |    ✅    |       ✅       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |    ⚠️    |     ✅     |
-| **debounce**                    |         ✅         |        ✅         |  ❌   |                     ❌                     |    ✅    |    —     |       ✅       |  ✅   |           ❌           |         ❌          |                ❌                |       ❌        |   ❌    |     ❌     |
-| **ignoreOld**                   |         ✅         |        ❌         |  ✅   |                     ❌                     |    ✅    |    ✅    |       —        |  ✅   |           ❌           |         ❌          |                ❌                |       ❌        |   ✅    |     ❌     |
-| **fresh**                       |         ✅         |        ❌         |  ✅   |                     ❌                     |    ❌    |    ✅    |       ✅       |   —   |           ❌           |         ❌          |                ❌                |       ❌        |    ⚠️    |     ✅     |
-| **OptimisticCommand**           |         ✅         |        ❌         |   ⚠️   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           —            |         ❌          |                ❌                |       ❌        |   ❌    |     ✅     |
-| **OptimisticSync**              |         ✅         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |          —          |                ❌                |       ❌        |   ❌    |     ❌     |
-| **OptimisticSyncWithPush**      |         ✅         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                —                 |       ❌        |   ❌    |     ❌     |
-| **ServerPush**                  |         ❌         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |        —        |   ❌    |     ❌     |
-| **polling**                     |         ⚠️          |         ⚠️         |  ❌   |                     ❌                     |    ⚠️     |    ❌    |       ✅       |   ⚠️   |           ❌           |         ❌          |                ❌                |       ❌        |    —    |     ⚠️      |
-| **sequential**                  |         ✅         |        ✅         |  ✅   |                     ❌                     |    ✅    |    ❌    |       ❌       |  ✅   |           ✅           |         ❌          |                ❌                |       ❌        |    ⚠️    |     —      |
+|                                 | check<br/>Internet | non<br/>Reentrant | retry | unlimited<br/>Retry<br/>Check<br/>Internet | throttle | debounce | ignore<br/>Old | fresh | Optimistic<br/>Command | Optimistic<br/>Sync | Optimistic<br/>Sync<br/>WithPush | Server<br/>Push | Load<br/>Pages | polling | sequential |
+|---------------------------------|:------------------:|:-----------------:|:-----:|:------------------------------------------:|:--------:|:--------:|:--------------:|:-----:|:----------------------:|:-------------------:|:--------------------------------:|:---------------:|:--------------:|:-------:|:----------:|
+| **checkInternet**               |         —          |        ✅         |  ✅   |                     ❌                     |    ✅    |    ✅    |       ✅       |  ✅   |           ✅           |         ✅          |                ✅                |       ❌        |       ✅        |    ⚠️    |     ✅     |
+| **nonReentrant**                |         ✅         |         —         |  ✅   |                     ❌                     |    ❌    |    ✅    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |       ❌        |    ⚠️    |     ✅     |
+| **retry**                       |         ✅         |        ✅         |   —   |                     ❌                     |    ✅    |    ❌    |       ✅       |  ✅   |           ⚠️            |         ❌          |                ❌                |       ❌        |       ✅        |   ❌    |     ✅     |
+| **unlimitedRetryCheckInternet** |         ❌         |        ❌         |  ❌   |                     —                      |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |       ⚠️        |   ❌    |     ❌     |
+| **throttle**                    |         ✅         |        ❌         |  ✅   |                     ❌                     |    —     |    ✅    |       ✅       |  ❌   |           ❌           |         ❌          |                ❌                |       ❌        |       ⚠️        |    ⚠️    |     ✅     |
+| **debounce**                    |         ✅         |        ✅         |  ❌   |                     ❌                     |    ✅    |    —     |       ✅       |  ✅   |           ❌           |         ❌          |                ❌                |       ❌        |       ✅        |   ❌    |     ❌     |
+| **ignoreOld**                   |         ✅         |        ❌         |  ✅   |                     ❌                     |    ✅    |    ✅    |       —        |  ✅   |           ❌           |         ❌          |                ❌                |       ❌        |       ❌        |   ✅    |     ❌     |
+| **fresh**                       |         ✅         |        ❌         |  ✅   |                     ❌                     |    ❌    |    ✅    |       ✅       |   —   |           ❌           |         ❌          |                ❌                |       ❌        |       ⚠️        |    ⚠️    |     ✅     |
+| **OptimisticCommand**           |         ✅         |        ❌         |   ⚠️   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           —            |         ❌          |                ❌                |       ❌        |       ❌        |   ❌    |     ✅     |
+| **OptimisticSync**              |         ✅         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |          —          |                ❌                |       ❌        |       ❌        |   ❌    |     ❌     |
+| **OptimisticSyncWithPush**      |         ✅         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                —                 |       ❌        |       ❌        |   ❌    |     ❌     |
+| **ServerPush**                  |         ❌         |        ❌         |  ❌   |                     ❌                     |    ❌    |    ❌    |       ❌       |  ❌   |           ❌           |         ❌          |                ❌                |        —        |       ❌        |   ❌    |     ❌     |
+| **LoadPages**                   |       ✅        |       ❌        |       ✅        |       ⚠️        |       ⚠️        |       ✅        |       ❌        |       ⚠️        |       ❌        |       ❌        |       ❌        |       ❌        |        —        |       ⚠️        |       ✅        |
+| **polling**                     |         ⚠️          |         ⚠️         |  ❌   |                     ❌                     |    ⚠️     |    ❌    |       ✅       |   ⚠️   |           ❌           |         ❌          |                ❌                |       ❌        |       ⚠️        |    —    |     ⚠️      |
+| **sequential**                  |         ✅         |        ✅         |  ✅   |                     ❌                     |    ✅    |    ❌    |       ❌       |  ✅   |           ✅           |         ❌          |                ❌                |       ❌        |       ✅        |    ⚠️    |     —      |
 
 #### ✅ Compatible (can be combined)
 
@@ -149,3 +151,4 @@ All features are explained in detail in the following pages:
 * [Internet features](./internet-features)
 * [Control features](./control-features)
 * [Optimistic features](./optimistic-features)
+* [Paged loading](./paged-loading)

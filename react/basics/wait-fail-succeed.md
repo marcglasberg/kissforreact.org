@@ -312,6 +312,68 @@ Two rules:
   `store.clearAllExceptions()` clears all types. You rarely need it, because `logOut()`,
   `clearInternalActionProps()` and the shutdown of the store already call it.
 
+## Suspense and error boundaries
+
+The hooks above are the recommended style: the component reads the status, and decides what
+to show. But if your app already uses React's `<Suspense>` and error boundaries, you can use
+the `useSuspense` hook instead. It does the same work as `useIsWaiting` and `useIsFailed`
+together, in the Suspense style:
+
+```tsx
+function UserName({ userId }: { userId: string }) {
+  useSuspense(LoadUser, { statusKey: userId });
+  const user = useSelect((state: State) => state.users[userId]);
+  return <p>{user.name}</p>;
+}
+
+function UserCard({ userId }: { userId: string }) {
+  return (
+    <ErrorBoundary fallback={<p>Loading failed.</p>}>
+      <Suspense fallback={<CircularProgress />}>
+        <UserName userId={userId} />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+This is what happens:
+
+* **While `LoadUser` runs** for that key, `useSuspense` throws a promise. React stops the
+  render at that line (the code after the hook doesn't run), and shows the `fallback` of the
+  nearest `<Suspense>` above the component, in its place. When the action finishes, the
+  promise resolves, and React renders the component again from the start. Only the nearest
+  `<Suspense>` is affected. Other boundaries, above it or in other branches of the tree, keep
+  showing their content.
+
+* **If `LoadUser` failed** for that key, `useSuspense` throws the error. The nearest error
+  boundary above the component catches it, and shows its fallback instead. Like `useIsFailed`,
+  it throws any error, not only `UserException`s. The failure stays recorded in the store until
+  the action is dispatched again, or `clearExceptionFor` is called. So a "retry" button in the
+  boundary should dispatch the action again, and then reset the boundary: the component
+  mounts again, suspends while the action runs, and then shows the result. If you want to
+  handle the failure yourself, pass `throwErrors: false`, and use `useIsFailed` or
+  `useExceptionFor` in the component.
+
+* **Otherwise**, the hook returns, and the component renders normally.
+
+Without `statusKey`, `useSuspense(LoadUser)` suspends while **any** `LoadUser` runs (or any
+action of a subclass, like `useIsWaiting`), and throws the most recent failure of the type.
+
+On the server, and while hydrating, `useSuspense` never suspends or throws, like the other
+status hooks (see [server-side rendering](../miscellaneous/server-side-rendering)). After
+hydration, it follows the live store.
+
+Two things to know about React's Suspense:
+
+* A component that suspends on its **first** render is thrown away, and rendered again from
+  the start when the action finishes. Its local state (`useState`, `useRef`) is lost. A
+  component that had already rendered keeps its state while suspended: React hides it, and
+  shows the fallback in its place.
+
+* The store creates a promise only when a component actually suspends, and releases it when
+  the action finishes. An app that never calls `useSuspense` pays nothing for it.
+
 <hr></hr>
 
 You now know the basics of Kiss: 

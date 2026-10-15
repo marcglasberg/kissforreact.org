@@ -592,6 +592,33 @@ local changes are not overwritten by older pushes, and the last write wins acros
 
 &nbsp;
 
+## LoadPages
+
+To load a list page by page (a "load more" button, or an infinite scroll), extend `LoadPages`.
+It keeps the loaded pages in the state, in an immutable `Pages` value, and knows how to load
+the next page, the previous page, the first page again, or all the loaded pages again.
+
+```tsx
+class LoadTodos extends LoadPages<State, Todo[], string | null> {
+  getPagesFromState(state: State) { return state.todos; }
+  applyPagesToState(state: State, todos: Pages<Todo[], string | null>) { return state.copy({ todos }); }
+  initialPageParam() { return null; }                                     // The first page has no cursor.
+  loadPage(cursor: string | null) { return api.todosAfter(cursor, 20); }  // 20 items with id > cursor.
+  nextPageParam(lastPage: Todo[]) { return lastPage.length < 20 ? null : lastPage.at(-1)!.id; } // null = no more.
+}
+
+dispatch(new LoadTodos());         // Loads again the pages in the state, or the first page if there are none.
+dispatch(new LoadTodos('next'));   // Adds the next page to the end. Does nothing if there is no next page.
+dispatch(new LoadTodos('first'));  // Starts over: loads the first page, and drops the other pages.
+```
+
+Only one load per list runs at a time: a `'next'` dispatched while the list is loading is
+aborted (two quick taps load one page), and a `'first'` or `'refresh'` aborts the loads
+that are running. The component reads `todos.pages`, `todos.hasNextPage` and
+`useIsWaiting(LoadTodos)`. See [Paged loading](/react/advanced-actions/paged-loading).
+
+&nbsp;
+
 See all the features, and which ones can be combined, in
 [Action features](/react/advanced-actions/action-features).
 

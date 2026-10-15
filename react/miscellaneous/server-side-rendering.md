@@ -256,9 +256,9 @@ need if you do SSR without a framework.
 On the server, and while hydrating, the hooks don't read the live store. They read the
 `serverState` of the provider (or the `initialState` of the store, if you gave no
 `serverState`). The status hooks have fixed values: `useIsWaiting` and `useIsFailed` are
-`false`, `useExceptionFor` is `null`, and `useIsStoreReady` is `true`. So the HTML never shows
-a spinner, an error, or a store that is still loading. After hydration, all the hooks follow
-the live store.
+`false`, `useExceptionFor` is `null`, `useSuspense` never suspends or throws, and
+`useIsStoreReady` is `true`. So the HTML never shows a spinner, an error, or a store that is
+still loading. After hydration, all the hooks follow the live store.
 
 This means the server must load the data **before** rendering. Dispatching during the render
 does nothing useful: the server renders once, and `useStoreEffect` doesn't run there.

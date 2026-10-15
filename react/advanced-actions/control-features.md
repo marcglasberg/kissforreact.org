@@ -110,8 +110,9 @@ with the same key can't run at the same time either.
   run one at a time.
 
 * It can't be combined with [throttle](#throttle), [fresh](#fresh) or [ignoreOld](#ignoreold),
-  nor used in an `OptimisticCommand` (which is already non-reentrant), nor combined with
-  [unlimitedRetryCheckInternet](./internet-features#unlimitedretrycheckinternet)
+  nor used in an `OptimisticCommand` (which is already non-reentrant) or a
+  [LoadPages](./paged-loading) (which already runs one load per list at a time), nor combined
+  with [unlimitedRetryCheckInternet](./internet-features#unlimitedretrycheckinternet)
   (which is also already non-reentrant). Doing so throws a `StoreException`.
 
 * If `abortDispatch()` returns `true`, the action is aborted before the non-reentrant
@@ -200,6 +201,43 @@ class LoadText extends Action {
 }
 ```
 
+### Giving up on some errors
+
+By default, every error is retried, including `UserException`s. A `UserException` thrown by
+the reducer may well be transient ("Could not reach the server, please try again"), and only
+the action knows.
+
+Some errors are permanent: a 404, a 401, a validation error from the server. Retrying them
+wastes time, and delays the error message. To give up on them, override
+`shouldRetry(error, attempt)` to return `false`:
+
+```tsx
+class LoadUser extends Action {
+  retry = {on: true}
+
+  shouldRetry(error: unknown, attempt: number) {
+    return !(error instanceof NotFoundError) && !(error instanceof UnauthorizedError);
+  }
+
+  async reduce() { ... }
+}
+```
+
+* `error` is the error thrown by the attempt that just failed.
+* `attempt` is the number of that attempt, starting at `1`. It's the same as `this.attempts`
+  after the failure.
+
+It's called after each failed attempt that still has retries left. When it returns `false`,
+the action fails right away with that error, as if the retries had run out. It's not called
+when the retries ran out (the action fails anyway), nor when the action was aborted on
+purpose with an `AbortDispatchException`, which is never retried. If `shouldRetry` itself
+throws, the action fails with that error.
+
+The same method is used by [unlimitedRetryCheckInternet](./internet-features#unlimitedretrycheckinternet)
+(but not when there is no internet, since the action then waits for the internet, and doesn't
+fail), and by an [OptimisticCommand](./optimistic-features#optimisticcommand) with `retry`,
+after each failed server call.
+
 ### Unlimited retries
 
 If you want to retry unlimited times, make `maxRetries` equal to `-1`,
@@ -217,7 +255,9 @@ it may never finish if it keeps failing. So, be careful when using it.
 
 To stop the retries, call `store.clearInternalActionProps()` (for example, on logout), or
 shut down the store with `store.setShutDown(true)`. The action is then aborted with an
-`AbortDispatchException`, so it doesn't fail.
+`AbortDispatchException`, so it doesn't fail. To stop on a permanent error (a 404, a 401),
+override `shouldRetry` (see [Giving up on some errors](#giving-up-on-some-errors)). The action
+then fails with that error.
 
 Note combining `retry` with [checkInternet](./internet-features#checkinternet) will not retry
 when there is no internet. It only retries if there IS internet, but the action fails for some
@@ -413,6 +453,9 @@ their contents. Expired locks are removed automatically, to prevent memory leaks
 * It can't be combined with [nonReentrant](#nonreentrant) or [fresh](#fresh), nor used in an
   `OptimisticCommand` or an `OptimisticSync`. Doing so throws a `StoreException`.
 
+* In a [LoadPages](./paged-loading), it only applies to `'first'` and `'refresh'`: a
+  `'next'` or `'previous'` always runs.
+
 * An invalid value (for example, a negative number) makes the dispatch throw a
   `StoreException`.
 
@@ -606,18 +649,20 @@ async reduce() {
 }
 ```
 
-For actions that don't use `ignoreOld`, the signal is never aborted.
+The signal is also aborted when the action is aborted from outside, with `store.abort` or
+`action.abort()`. See [aborting actions](./aborting-actions).
 
 ### Checking if the action is old
 
 Only the state returned by the reducer is ignored. Anything else the reducer did still
-happened, like dispatching other actions. To avoid that, check `this.isOld`, which is `true`
-when an action with the same key was dispatched after this one:
+happened, like dispatching other actions. To avoid that, check `this.isAborted`, which is
+`true` when an action with the same key was dispatched after this one (or when the action was
+aborted from outside):
 
 ```tsx
 async reduce() {
   let items = await loadItems(this.tab);
-  if (!this.isOld) this.dispatch(new LoadItemImages(items));
+  if (!this.isAborted) this.dispatch(new LoadItemImages(items));
   return (state: State) => state.copy({ items });
 }
 ```
@@ -718,7 +763,8 @@ old, and vice versa.
   never let two actions with the same key run at the same time, nor with
   [sequential](#sequential), which already applies the results in the dispatch order. It also
   can't be used in the [optimistic](./optimistic-features) actions, which already decide which
-  values win. Doing so throws a `StoreException`.
+  values win, nor in a [LoadPages](./paged-loading), which already aborts the older loads of
+  the list. Doing so throws a `StoreException`.
 
 ### Other notes
 
@@ -876,6 +922,11 @@ enum value.
 
 * It can't be combined with [nonReentrant](#nonreentrant) or [throttle](#throttle), nor used
   in an `OptimisticCommand` or an `OptimisticSync`. Doing so throws a `StoreException`.
+
+* In a [LoadPages](./paged-loading), it only applies to `'first'` and `'refresh'`: a
+  `'next'` or `'previous'` always runs, and starts a new fresh period. So, dispatch a
+  `'refresh'` with `fresh` whenever the screen is shown, and it only reloads the pages when
+  the data is old.
 
 * If `abortDispatch()` returns `true`, the action is aborted before the fresh check, and
   doesn't make its key fresh.
