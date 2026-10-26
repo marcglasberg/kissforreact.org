@@ -19,6 +19,14 @@ const config = {
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
+  // Every page is emitted as `page.html`, and the URLs have no trailing slash, which is what
+  // the site's links, the sitemap and the README always used. GitHub Pages serves a `.html`
+  // file directly, with no redirect. (Without this setting, pages were `page/index.html`, and
+  // GitHub Pages redirected each direct access to add the slash.) Don't set it to `true`: the
+  // pages link to each other with relative links like `./control-features#retry`, which are
+  // resolved against the page URL, and a trailing slash on it breaks all of them.
+  trailingSlash: false,
+
   // GitHub pages deployment config (only if using GitHub)
   organizationName: 'marcglasberg',
   projectName: 'kissforreact.org', // Usually your repo name.
