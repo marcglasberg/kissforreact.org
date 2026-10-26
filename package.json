@@ -8,7 +8,6 @@
     "build": "npm run generate:docs && cp kiss-state-management-docs.md static/ && docusaurus build",
     "build:docs-only": "docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
