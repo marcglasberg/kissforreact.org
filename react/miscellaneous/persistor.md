@@ -545,6 +545,17 @@ To avoid this, as soon as you detect that the app is about to be killed,
 you should call `store.persistAndPausePersistor()` to save the state immediately,
 and then pause the persistor.
 
+## Server-side rendering
+
+The persistor saves the state on the local device, and the server has no access to that. So,
+in a server-rendered app, the persistor goes in the store the components use, in the browser
+only, and it's for **client-only state** (preferences, filters, drafts), not for the data the
+server loads. The server HTML shows the server value, and the persisted value appears after
+hydration. The store that loads the data on the server (created with `server: true`) refuses
+a persistor. See
+[The persistor and server-side rendering](./server-side-rendering#the-persistor-and-server-side-rendering)
+for how the two renders work, and what to do when the server needs per-user information.
+
 ## Log out
 
 When your user logs out of your app, or deletes its user account,

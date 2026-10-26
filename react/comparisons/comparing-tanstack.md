@@ -1093,6 +1093,14 @@ export default async function UserPage({ params }) {
 }
 ```
 
+On the server, TanStack Query never polls (`refetchInterval` belongs to the component
+subscription, created in an effect, which the server never runs) and turns retries off
+(`retry` is 0 there). Kiss does the same in the store that loads the data of a request, created
+with `server: true`: `Poll.start` runs the action once, `retry` and
+`unlimitedRetryCheckInternet` run the reducer once, and `debounce` runs it right away. In both
+libraries, the server does explicit loads and nothing else, and the persisted data (TanStack's
+`PersistQueryClientProvider`, Kiss's persistor) is restored in the browser, after hydration.
+
 See [Server-side rendering](../miscellaneous/server-side-rendering).
 
 ## Persistence

@@ -339,6 +339,10 @@ Unlimited retries are not allowed (`maxRetries: -1` or `unlimitedRetries: true`)
 since a command that never finishes would block new dispatches of the same command forever.
 If you use them, the dispatch throws a `StoreException`.
 
+In a server store (created with `server: true`, the store that loads the data of a request in
+[server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)),
+`sendCommandToServer` is called once, and not retried.
+
 ### CheckInternet
 
 You can add the [checkInternet](./internet-features#checkinternet) feature. In this case, if

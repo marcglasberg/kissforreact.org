@@ -219,7 +219,9 @@ const store = createStore<State>({
 
 The sources are only started when something first reads the signal: `store.isFocused`,
 `useIsFocused()`, or a `useStoreEffect` with `onFocus`. A component with `onMount` only
-doesn't make the store listen to anything.
+doesn't make the store listen to anything. A server store (created with `server: true`, for
+[server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)) never
+starts them: there, both signals are always `true`.
 
 The online signal is also what the
 [`checkInternet`](../advanced-actions/internet-features#checkinternet) and

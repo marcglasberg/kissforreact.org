@@ -99,7 +99,9 @@ const store = createStore<State>({
 ```
 
 The source is started when the signal is first read (for example, by the first action with
-`checkInternet`), and stopped by `store.dispose()`.
+`checkInternet`), and stopped by `store.dispose()`. A server store (created with `server: true`,
+for [server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)) never
+starts it: there, the app always counts as online.
 
 Alternatively, override the `hasInternet()` method of your base action, to check the connection
 on demand each time an action needs it (for example, with the
@@ -330,6 +332,11 @@ const store = createStore<State>({
 * This only checks if the device's internet is on or off.
   It does not verify if the internet provider is working or if the server is available.
   The check may pass, but network requests can still fail.
+
+* In a server store (created with `server: true`, the store that loads the data of a request
+  in [server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)), the
+  internet is not checked (the server counts as online), the reducer runs once, and if it
+  throws, the action fails with that error right away.
 
 ## Simulating the connection in tests
 

@@ -57,7 +57,7 @@ actions before rendering, wait for them to finish, and pass the state to render 
 `serverState`:
 
 ```tsx
-const store = createStore<State>({ initialState: new State() });
+const store = createStore<State>({ initialState: new State(), server: true });
 await store.dispatchAndWait(new LoadData());
 const html = renderToString(
   <StoreProvider store={store} serverState={store.state}>
@@ -89,8 +89,13 @@ serializer you use for persistence.
 On the server and while hydrating, `useIsWaiting` and `useIsFailed` are `false`,
 `useExceptionFor` is `null`, `useSuspense` never suspends or throws, and `useIsStoreReady` is
 `true`: the HTML never shows an action in progress, a failed action, or a store that is not
-ready. After hydration, these hooks follow the live store. So, on the server, wait for your actions to finish (and for `store.ready()`, if the
-server store has a persistor) before rendering.
+ready. After hydration, these hooks follow the live store. So, on the server, wait for your
+actions to finish before rendering.
+
+The server store is created with `server: true`: the actions that poll, retry or debounce on
+the client run once there, and start no timers. After rendering, dispose it with
+`store.dispose()`. See [Server-side rendering](../miscellaneous/server-side-rendering) for the
+details, Next.js, streaming, and the persistor.
 
 ## Try it out
 

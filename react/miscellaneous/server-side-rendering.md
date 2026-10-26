@@ -67,7 +67,8 @@ Two details:
   the hooks follow the store.
 - If you use a persistor that reads `localStorage`, create it only in the browser:
   `persistor: typeof window === 'undefined' ? undefined : new MyPersistor()`. On the server
-  there is no `localStorage`.
+  there is no `localStorage`. See [The persistor and server-side rendering](#the-persistor-and-server-side-rendering)
+  for what a persistor can and cannot do in a server-rendered app.
 
 Your `loadInitialState` can use Kiss too. Create a store, dispatch the action that loads the
 data, wait for it, take the state, and dispose the store:
@@ -75,7 +76,7 @@ data, wait for it, take the state, and dispose the store:
 ```ts
 // src/server-state.ts
 export async function loadInitialState(): Promise<State> {
-  const store = createStore<State>({ initialState: emptyState });
+  const store = createStore<State>({ initialState: emptyState, server: true });
   try {
     await store.dispatchAndWait(new LoadData());
     return store.state;
@@ -87,7 +88,11 @@ export async function loadInitialState(): Promise<State> {
 
 In server components, `kiss-for-react` gives you the store and the actions, but not the hooks.
 Hooks only work in client components (the ones with `'use client'` at the top). If you import
-a hook in a server component, you get a build error, which is the right thing.
+a hook in a server component, you get a build error, which is the right thing. This works
+through the `react-server` export condition of the package: the bundlers of React Server
+Components resolve `kiss-for-react` to its server entry in server components. The same entry
+is also available as the subpath `kiss-for-react/server`, for code that must never pull in the
+hooks, whatever the bundler.
 
 ### 2. The pages
 
@@ -263,6 +268,50 @@ still loading. After hydration, all the hooks follow the live store.
 This means the server must load the data **before** rendering. Dispatching during the render
 does nothing useful: the server renders once, and `useStoreEffect` doesn't run there.
 
+### The loading store
+
+In a server-rendered app there are two stores, created in two different files:
+
+- The **loading store**: the store the server code creates for a request, dispatches the
+  loading actions on, renders from, and disposes. It lives in server-only code (the Express
+  handler, `loadInitialState` in a server component, `getServerSideProps`), which never reaches
+  the browser.
+- The **app store**: the store the components use, through the hooks. It lives in client code
+  (the `hydrateRoot` entry, the `'use client'` provider, `_app.tsx`).
+
+The loading store runs the same action classes as the client. On the client, `LoadData` may
+poll, retry or debounce, and that's right there. The server only wants to run its reducer
+once, and render. So, create the loading store with `server: true`:
+
+```ts
+const store = createStore<State>({ initialState: emptyState, server: true });
+```
+
+In a server store, the action features that repeat or wait run the reducer once, now, and
+stop:
+
+| Feature                                           | In a server store                                                                      |
+|---------------------------------------------------|----------------------------------------------------------------------------------------|
+| Polling (`Poll.start`, `Poll.runNowAndRestart`)   | The action runs once, and no polling is started (as with `Poll.once`)                  |
+| `retry`, `unlimitedRetryCheckInternet`            | The reducer runs once; if it throws, the action fails with that error right away        |
+| `retry` of an `OptimisticCommand`                 | `sendCommandToServer` is called once                                                   |
+| `debounce`                                        | The reducer runs right away, without waiting                                           |
+| `focusSource`, `onlineSource`                     | Not started: the app counts as focused and online                                      |
+| `persistor`                                       | Not allowed: `createStore` throws a `StoreException`                                   |
+
+Everything else is the same: `checkInternet`, `nonReentrant`, `ignoreOld`, `throttle`,
+`fresh`, `sequential`, the optimistic features, the store props, `dispatchWhen` and the waits.
+The validations of the features still run, so an action class that is wrong on the client is
+also wrong on the server. Nothing changes in a store created without the option, so the app
+store, the components and the action classes stay as they are. In actions, `this.store.isServer`
+tells if the store is a server store, to skip client-only work there (opening a WebSocket, for
+example).
+
+Don't set `server: true` in the app store, not even when Next.js renders the `'use client'`
+provider on the server: that store only renders the state it was given, and the server never
+runs the effects that dispatch. The rule on the server is simple: dispatch the loads, wait for
+them, render, dispose.
+
 ### One store per request
 
 Never create the store at the top of a module on the server. All the requests the server
@@ -271,7 +320,7 @@ request, and dispose it when the request is done:
 
 ```tsx
 app.get('/', async (req, res) => {
-  const store = createStore<State>({ initialState: new State() });
+  const store = createStore<State>({ initialState: new State(), server: true });
   try {
     await store.dispatchAndWait(new LoadData(req.params));
     const html = renderToString(
@@ -286,10 +335,12 @@ app.get('/', async (req, res) => {
 });
 ```
 
-`store.dispose()` stops everything the store could leave running: polling, debounce and retry
-timers, pending `dispatchWhen`s, and pending waits like `waitCondition` (they reject). A
-disposed store leaves nothing behind in the Node process. In the browser, the usual single
-store is fine.
+The store is still disposed, even with `server: true`. The option stops the timers a shared
+action class would start by itself (polling, retry, debounce). `store.dispose()` releases
+what the server code itself started: the [store props](./store-props) (an interval, a
+WebSocket), the pending `dispatchWhen`s and waits like `waitCondition` (they reject), the
+actions still waiting, and the `dependencies` and `configuration`. A disposed store leaves
+nothing behind in the Node process. In the browser, the usual single store is fine.
 
 ### The state travels as JSON
 
@@ -334,6 +385,55 @@ pieces: first everything outside the `Suspense` boundaries, then each boundary w
 ready. The hooks inside the boundaries read `serverState` too, so the complete page hydrates
 without mismatches. Dispose the store when the stream ends (in `onAllReady`, and when the
 connection closes).
+
+In React 18, keep each Suspense boundary next to the components that read the store, not
+inside one. The hooks re-render those components synchronously when the store changes, and
+React 18 gives up hydrating a boundary that hasn't hydrated yet when a component above it
+re-renders synchronously: it client-renders the boundary, with a console error. React 19
+hydrates the boundary first, and doesn't need this.
+
+### The persistor and server-side rendering
+
+The [persistor](./persistor.md) saves the state on the local device (`localStorage`,
+`AsyncStorage`, IndexedDB). The server has no access to that, and no library can put what is
+in the browser's storage into the server HTML. So, in every library, locally persisted state is
+**client-only state**, and the page goes through two renders:
+
+1. The server HTML, and the first render in the browser that hydrates it, show the **server
+   value** (the default, or what the server loaded).
+2. After hydration, the page updates to the **persisted value**.
+
+The second step can be visible, as a brief change of the screen. It's the price of hydration:
+React requires the first render in the browser to match the HTML exactly, so the persisted
+value can't be used before. Jotai reads `atomWithStorage` in an effect by default, Zustand's
+`persist` recommends `skipHydration` and rehydrating in an effect, Redux Persist rehydrates in
+the browser, TanStack Query's `PersistQueryClientProvider` restores the cache after mount: all
+the same two renders.
+
+Kiss does it with `serverState`. In the browser, the persistor starts reading storage as soon as
+the app store is created, and may finish before React hydrates. While hydrating, the hooks
+render `serverState`, not the live store. After hydration, the components catch up with the
+live state, which by then has the persisted values. If a page's `StoreSlice` mounts before the
+persistor finished, the slice is merged again on top of the persisted state when it arrives,
+so the result is always the server's data plus the persisted client-only fields. The
+[todo app with Next.js](https://github.com/marcglasberg/kiss-for-react/tree/main/examples/todo-app-nextjs)
+is exactly this: the todos come from the server on every request, and the filter the user
+chose is restored from `localStorage` after hydration.
+
+The rules that follow:
+
+- The persistor goes in the app store, in the browser only (the loading store refuses one).
+  Create it with `typeof window === 'undefined' ? undefined : new MyPersistor()`, since Next.js
+  also runs the provider's `createStore` on the server.
+- Persist client-only state: preferences, filters, drafts. Not the data the server loads, which
+  is stale on the next visit; the server's data must win, and with `StoreSlice` it does.
+- If the server must render with some per-user information, that information must travel with
+  the request, usually in a cookie (the theme, the language, a session id). The server reads it
+  in the loading store's action, or in the server component, and puts the result in the state.
+  `localStorage` can't do this; it's how browsers work, not a Kiss limitation.
+- If the brief change after hydration is not acceptable for some part of the page, render that
+  part only after hydration: keep a `hydrated` flag in client state, set it in an effect, and
+  render a neutral placeholder until it's `true`.
 
 ## Examples
 

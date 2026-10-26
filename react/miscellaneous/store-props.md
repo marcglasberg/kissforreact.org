@@ -180,6 +180,9 @@ beforeEach(() => { store = createStore<State>({ initialState: State.initialState
 afterEach(() => store.dispose());
 ```
 
+It's also how the store that loads the data of a request is ended, at the end of the request,
+in [server-side rendering](./server-side-rendering#one-store-per-request).
+
 It does the following, in order:
 
 1. Shuts down the store (`setShutDown(true)`), so that the actions dispatched from now on are

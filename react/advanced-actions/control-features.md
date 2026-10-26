@@ -251,7 +251,8 @@ class LoadText extends Action {
 ```
 
 **Warning:** If you `await dispatchAndWait(action)` and the action uses unlimited retries,
-it may never finish if it keeps failing. So, be careful when using it.
+it may never finish if it keeps failing. So, be careful when using it. This can't happen in a
+server store (created with `server: true`), where the reducer runs once and is never retried.
 
 To stop the retries, call `store.clearInternalActionProps()` (for example, on logout), or
 shut down the store with `store.setShutDown(true)`. The action is then aborted with an
@@ -300,6 +301,11 @@ class LoadText extends Action {
   [unlimitedRetryCheckInternet](./internet-features#unlimitedretrycheckinternet),
   or [OptimisticSync](./optimistic-features#optimisticsync).
   Doing so throws a `StoreException`.
+
+* In a server store (created with `server: true`, the store that loads the data of a request
+  in [server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)), the
+  reducer runs once, and if it throws, the action fails with that error right away, without
+  retrying.
 
 ---
 
@@ -575,6 +581,10 @@ waiting for their debounce period finish right away, without running their reduc
 
 * An invalid value (for example, a negative number) makes the dispatch throw a
   `StoreException`.
+
+* In a server store (created with `server: true`, the store that loads the data of a request
+  in [server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)), the
+  debounce period is not waited: the reducer runs right away. The action is still async.
 
 ## ignoreOld
 
@@ -1028,6 +1038,11 @@ What "focused" and "online" mean comes from the store: `store.isFocused` and `st
 Where the store can't know (the server, Node, React Native without a `focusSource` or
 `onlineSource` in `createStore`), the app counts as focused and online, and the polling never
 pauses. In tests, use `store.setFocused(false)` and `store.setOnline(false)`.
+
+In a server store (created with `server: true`, the store that loads the data of a request in
+[server-side rendering](../miscellaneous/server-side-rendering#the-loading-store)),
+`Poll.start` and `Poll.runNowAndRestart` run the action once, like `Poll.once`, and start no
+polling: the server renders once, and nothing would use the next tick.
 
 ### Poll values
 
