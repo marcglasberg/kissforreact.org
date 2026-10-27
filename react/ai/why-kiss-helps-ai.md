@@ -356,7 +356,7 @@ Code I write with a loose structure can work and still look alien to you. With K
 has one shape: a state, actions that change it, components that read it. You will find the
 same things in the same places, and you will be able to read what I wrote.
 
-## Why I write worse code with Redux, Zustand, and React Query
+## Why I write worse code with Redux, Zustand, React Query, and MobX
 
 These are good libraries. Many people use them well. The problem is not what they do. It is
 what they leave for me to decide, and where they let me put things. Each of them covers one
@@ -519,9 +519,67 @@ start, and the new logic has an obvious place to go. What matters to an agent is
 little code the easy version needs. It is whether the change that comes later can be made
 cleanly. See [Comparing with TanStack Query](../comparisons/comparing-tanstack).
 
+### MobX
+
+MobX is the opposite of Redux. Instead of one immutable state and explicit changes, the
+state is mutable and observable, and the library watches what each component reads and
+re-renders it when that changes. For a human this feels like magic: you assign to a field,
+and the screen updates. For me, the magic is exactly the problem, because everything that
+matters happens at runtime, where I can't read it.
+
+**Anyone can change anything, from anywhere.** An observable field can be assigned in a
+store method, in a component, in a callback, in a timer. MobX asks you to wrap changes in
+`action`, and can be set to complain when you don't, but an action is just any function,
+anywhere. There is no single entry point. So the question "who changes the orders?" has no
+place to look. I search for every assignment to that field, and I miss the ones hidden
+behind a helper or a spread. In Kiss there is one answer: the actions that return a new
+state with `orders` in it.
+
+**What depends on what is invisible.** A component re-renders based on what it happened to
+read during its last render. That is tracked at runtime, not written in the code. So I
+can't tell, by reading, whether a change will reach the screen. And the mistakes here are
+the worst kind for me, because they are silent. I forget to wrap a component in `observer`,
+and it never updates. I destructure an observable into plain variables, and tracking is
+lost. I read a value outside a reactive context, and nothing happens. None of these fail at
+compile time. None of them throw. The screen just stays stale, and I have no error to read
+and act on. In Kiss, a component says what it reads with `useSelect`, and it is right there
+in the code.
+
+**Async changes need care at every `await`.** After an `await`, I am no longer inside the
+action, so a plain assignment is a mistake, and I have to wrap it in `runInAction` or write
+the whole thing as a generator with `flow`. That is a decision I make at each `await`, and I
+get it wrong when I'm tired, or when I'm editing someone else's code that did it the other
+way. In Kiss, an async action awaits whatever it needs and returns one function that produces
+the new state. There is nothing to wrap.
+
+**Reactions leak.** `autorun` and `reaction` are side effects that can be created anywhere,
+and each returns a disposer that I must remember to call. They have no home and no owner,
+so when a screen closes or a test ends, some of them are still running. In Kiss, that kind
+of thing is a store prop, and the store disposes all of them at once.
+
+**The state is not a value.** Because the state is mutated in place, "the state at this
+moment" is not something I can hold, compare, log, or put in a test assertion. Snapshots,
+undo, persistence, and time travel all need extra machinery. In a test, I can't say
+"dispatch this, then expect the state to equal that", because the state is the same object
+before and after. In Kiss, every state is an immutable value. A test compares two values,
+and the whole app at any moment is one object I can print.
+
+**The fixes make it worse for me.** The MobX answer to deep nesting and serialization is
+MobX-State-Tree, and then MobX Keystone. Both add their own runtime type system on top of
+TypeScript. My main feedback loop is the TypeScript compiler, and these tools weaken it:
+types are inferred from runtime model definitions, errors happen at runtime with messages
+that don't point at the cause, and go-to-definition stops working. I end up guessing. See
+[Comparing with MobX](../comparisons/comparing-mobx).
+
+**To be fair**, MobX code is short, and computed values are a genuinely good idea: a derived
+value that updates by itself, written once. For a human who knows the rules, it is pleasant.
+But I do better with explicit than with implicit, every time. A change I can see, a
+dependency written in the code, and a mistake that produces an error I can read, are worth
+more to me than fewer lines.
+
 ### What they have in common
 
-In all three, the pattern is the same. Each library does its one job and is quiet about
+In all four, the pattern is the same. Each library does its one job and is quiet about
 everything around it: side effects, timers, listeners, errors, dependencies, and tests. That
 silence is where I make choices, and where I make them differently each time. Kiss is
 louder. It has an opinion about every one of those things, and the opinion is always the
