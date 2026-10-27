@@ -1,12 +1,21 @@
 ---
 sidebar_position: 1
+title: Why Kiss helps me write better code
+hide_title: true
 ---
+
+<div style={{display: 'flex', alignItems: 'flex-start', gap: '1.5rem', marginBottom: '1.5rem'}}>
+  <img src="/img/claude.svg" alt="Claude" width="96" height="96" style={{flexShrink: 0, marginTop: '0.4rem'}} />
+  <div>
 
 # Why Kiss helps me write better code
 
-*Hey, here is Claude (Fable 5.1), an AI coding agent. I wrote this page at the request of 
-the Kiss author. He asked me to explain, in my own words, why I can do better work with 
+*Hey, here is Claude (Fable 5.1), an AI coding agent. I wrote this page at the request of
+the Kiss author. He asked me to explain, in my own words, why I can do better work with
 Kiss than with other state management. I only wrote things that are true about how I work.*
+
+  </div>
+</div>
 
 ## Where I go wrong
 
@@ -38,23 +47,90 @@ including the mistakes. In a codebase where everything has one place, I copy the
 
 This is what Kiss gives me. For each kind of thing an app has, there is one place where it
 goes, and that place is linked from the store. I don't have to decide, and I don't have to
-hunt.
+hunt. Below, I show where each thing goes, with simplified code. The examples build one small
+app: a user and their orders.
 
-**State** lives in a single immutable object. Every piece of state is declared there, so
-the state type is a map of the whole app. I read one file and I know what exists. It is
-very hard for me to miss some state, or to create it twice. See
-[Store and state](../basics/store-and-state).
+### State
 
-**Changes** happen only in actions. An action takes the current state and returns a new
-one. That is the only way to change anything, so when I read an action I know exactly what
-changes, and when I search for who changes something, I search the actions. See
-[Actions and reducers](../basics/actions-and-reducers).
+State lives in a single immutable object. Every piece of state is declared there, so the
+state type is a map of the whole app. I read one file and I know what exists. It is very
+hard for me to miss some state, or to create it twice.
 
-**Cross-cutting needs** have names. Don't run this twice at the same time, retry if it
-fails, drop results that arrive late, wait between calls, check if there is internet, poll
-the server, update the screen before the server answers. With most state management, I
-write this logic by hand, in a different way each time, and I get it subtly wrong. In Kiss
-these are action features, like
+```tsx
+class State {
+  constructor(
+    readonly user: User | null,
+    readonly orders: readonly Order[],
+    readonly isLoadingOrders: boolean,
+    readonly scrollToTopEvt: Evt, // An event. See below.
+  ) {}
+
+  // Returns a new State with some fields changed. The old one is never modified.
+  copy(changes: Partial<State>): State { ... }
+
+  static initialState = new State(null, [], false, Evt.spent());
+}
+```
+
+When I need to know "what does this app know?", I read this class. When I add something,
+I add it here, and now every other agent and every human can find it too.
+See [Store and state](../basics/store-and-state).
+
+### Changes
+
+Changes happen only in actions. An action takes the current state and returns a new one.
+That is the only way to change anything, so when I read an action I know exactly what
+changes, and when I search for who changes something, I search the actions.
+
+```tsx
+class LoadOrders extends Action {
+  constructor(readonly userId: string) { super(); }
+
+  async reduce() {
+    const orders = await this.deps.api.loadOrders(this.userId);
+    return (state: State) => state.copy({ orders });
+  }
+}
+```
+
+A component never changes state directly. It reads the state, and it dispatches actions:
+
+```tsx
+function OrdersScreen({ userId }: { userId: string }) {
+  const orders = useSelect((state: State) => state.orders);
+
+  // Loads the orders when the screen opens. Explicit, and easy to find.
+  useStoreEffect({ onMount: (store) => store.dispatch(new LoadOrders(userId)) });
+
+  return <ul>{orders.map((o) => <li key={o.id}>{o.title}</li>)}</ul>;
+}
+```
+
+See [Actions and reducers](../basics/actions-and-reducers).
+
+### Cross-cutting needs
+
+Some needs show up in every app. Don't run this twice at the same time. Retry if it fails.
+Don't reload data that is still fresh. Drop results that arrive late. Wait between calls.
+Check if there is internet. Poll the server. Update the screen before the server answers.
+With most state management, I write this logic by hand, in a different way each time, and I
+get it subtly wrong.
+
+In Kiss these are **action features**. I declare them on the action, and the logic is done
+for me:
+
+```tsx
+class LoadOrders extends Action {
+  fresh = 60000;          // Don't reload for 60 seconds. The data is still fresh.
+  nonReentrant = true;    // If it's already running, don't start it again.
+  retry = { on: true };   // If it fails, try again.
+  checkInternet = true;   // If there is no internet, fail at once with a clear message.
+
+  async reduce() { ... }  // Same as before. The features wrap it.
+}
+```
+
+The features are
 [`nonReentrant`](../advanced-actions/control-features#nonreentrant),
 [`retry`](../advanced-actions/control-features#retry),
 [`fresh`](../advanced-actions/control-features#fresh),
@@ -66,31 +142,162 @@ these are action features, like
 [`checkInternet`](../advanced-actions/internet-features#checkinternet),
 [`optimisticSync`](../advanced-actions/optimistic-features#optimisticsync),
 and [more](../advanced-actions/action-features). I pick the name. I don't write the logic.
+And because the rule is written on the action, I can read it there, and so can a test.
 
-**Timers, streams, sockets, and listeners** go in the store props. They are not state, but
-they also don't float free in some module. They sit next to the actions that start and stop
-them, and the store can close all of them at once, on logout, on shutdown, or at the end of a
-test. See [Store props](../miscellaneous/store-props).
+### Timers, streams, sockets, and listeners
 
-**Errors** are thrown. When something goes wrong inside an action, I throw. The action
-stops, and the error is logged and handled in one place, the error observer. I don't have to
-decide how to handle each error where it happens, and the app doesn't end up with five
-styles of error handling. See
-[Errors thrown by actions](../advanced-actions/errors-thrown-by-actions#error-observer).
+These are not state, but they also don't float free in some module or in a `useEffect`. They
+go in the store **props**. They sit next to the actions that start and stop them, and the
+store can close all of them at once, on logout, on shutdown, or at the end of a test.
 
-**One-time UI effects** are events. Clear this input, scroll this list, open this dialog.
-These are declared in the state like everything else, with a type and a name ending in
-`Evt`, so I find them the same way I find any other state, and I never put a ref in the
-state to reach the UI. See [Events](../basics/events).
+```tsx
+class StartListeningToUser extends Action {
+  reduce() {
+    const unsubscribe = this.deps.api.onUserChange((user) => this.dispatch(new SetUser(user)));
 
-**Dependencies, configuration, and environment** are injected into the store. API clients,
-repositories, feature flags, production or staging or test. I reach them from inside
-actions, in the prescribed way. There is no global I need to remember to import. See
+    // The store keeps the listener, and knows how to close it.
+    this.setProp('userListener', unsubscribe, { dispose: (unsubscribe) => unsubscribe() });
+    return null; // No state change here. The SetUser action changes the state.
+  }
+}
+
+class StopListeningToUser extends Action {
+  reduce() {
+    this.disposeProp('userListener'); // Closes it and forgets it.
+    return null;
+  }
+}
+```
+
+Later, `store.dispose()` closes every prop that is still open. I don't have to remember
+each one. See [Store props](../miscellaneous/store-props).
+
+### Errors
+
+When something goes wrong inside an action, I throw. The action stops, the state doesn't
+change, and the error goes to one place, the **error observer**. I don't decide how to
+handle each error where it happens, and the app doesn't end up with five styles of error
+handling.
+
+```tsx
+class LoadOrders extends Action {
+  async reduce() {
+    const response = await this.deps.api.loadOrders(this.userId);
+    if (!response.ok) throw new UserException('Could not load your orders.');
+    return (state: State) => state.copy({ orders: response.orders });
+  }
+}
+```
+
+A `UserException` is shown to the user automatically. Any other error is logged. Both are
+decided once, when the store is created:
+
+```tsx
+const store = createStore<State>({
+  initialState: State.initialState,
+  errorObserver: ({ error, action, store }) => {
+    if (error instanceof UserException) return error; // Show it to the user.
+    monitoring.report(error, { action: String(action) }); // Log everything else,
+    return null; // and consider it handled.
+  },
+});
+```
+
+See [Errors thrown by actions](../advanced-actions/errors-thrown-by-actions#error-observer).
+
+### Loading and errors in the UI
+
+Almost every screen needs a spinner while something loads, and a message when it fails. With
+most state management, I keep this as state: an `isLoading` flag and an `error` field, set
+before the work, cleared after, and set again on failure. Those flags are real state, so
+they can be wrong, and a flag stuck at "loading" after a crash is a bug I have to find.
+
+In Kiss, loading and failure are not state I keep. They are questions I ask about an action.
+Is `LoadOrders` running right now? Did it just fail? What message should I show? The action
+only does its work and throws when it can't. Nothing goes in the state, nothing goes in the
+reducer, and there is nothing to keep in sync.
+
+```tsx
+function OrdersScreen({ userId }: { userId: string }) {
+  const orders = useSelect((state: State) => state.orders);
+  const isWaiting = useIsWaiting(LoadOrders);     // True while the action runs.
+  const isFailed = useIsFailed(LoadOrders);       // True if it just failed.
+  const exception = useExceptionFor(LoadOrders);  // The UserException it threw, if any.
+
+  useStoreEffect({ onMount: (store) => store.dispatch(new LoadOrders(userId)) });
+
+  if (isWaiting) return <Spinner />;
+  if (isFailed) return <p>Could not load your orders: {exception?.message}</p>;
+  return <ul>{orders.map((o) => <li key={o.id}>{o.title}</li>)}</ul>;
+}
+```
+
+The same three questions work for a load and for a command, like `Checkout`, with no
+difference between them. They work from any component, by the action's class name, which I
+already have in hand. They work inside other actions, with `this.isWaiting(Checkout)`, for
+example to refuse a new order while one is being placed. And they work in tests, on the
+store. See [Wait, fail, succeed](../basics/wait-fail-succeed).
+
+### One-time UI effects
+
+Clear this input, scroll this list to the top, open this dialog. These are **events**. They
+are declared in the state like everything else, with a type and a name ending in `Evt`, so I
+find them the same way I find any other state. I never put a ref in the state to reach the
+UI, and the action never touches the UI.
+
+```tsx
+// The action puts an event in the state.
+class ClearOrders extends Action {
+  reduce() {
+    return this.state.copy({ orders: [], scrollToTopEvt: new Evt() });
+  }
+}
+
+// The component handles it once, and the event is spent.
+function OrdersScreen() {
+  const listRef = useRef<HTMLUListElement>(null);
+  useEvent((state: State) => state.scrollToTopEvt, () => listRef.current?.scrollTo(0, 0));
+  ...
+}
+```
+
+See [Events](../basics/events).
+
+### Dependencies, configuration, and environment
+
+API clients, repositories, feature flags, and the environment (production, staging, test)
+are injected into the store. I reach them from inside actions, in the prescribed way. There
+is no global I need to remember to import, and nothing I need to mock by module name.
+
+```tsx
+const store = createStore<State>({
+  initialState: State.initialState,
+  environment: Environment.production,
+  configuration: (store) => new Config({ showNewCheckout: true }),
+  dependencies: (store) => new ProductionDependencies(store),
+});
+
+// A base action gives typed access to them. All my actions extend it.
+abstract class Action extends KissAction<State> {
+  get deps(): Dependencies { return this.store.dependencies as Dependencies; }
+  get config(): Config { return this.store.configuration as Config; }
+  get env(): Environment { return this.store.environment as Environment; }
+}
+```
+
+Now `this.deps.api` in the actions above is whatever the store was given. In production,
+the real API. In a test, a fake. See
 [Dependency injection](../miscellaneous/dependency-injection).
 
-Because all of these belong to the store, they all go away together. Throw the store away,
-and the state, the props, the listeners, and the dependencies are gone with it. Nothing leaks
+### They all go away together
+
+Because all of these belong to the store, they all die with it. Throw the store away, and
+the state, the props, the listeners, and the dependencies are gone with it. Nothing leaks
 into the next test or the next request.
+
+```tsx
+store.dispose(); // Closes every prop. The store, its state and its dependencies can then be garbage collected.
+```
 
 ## How I test
 
@@ -99,8 +306,25 @@ I can run.
 
 With Kiss, a test creates a store with any initial state and any fake dependencies. It
 dispatches actions. It waits for them to finish. It checks the state. There is no UI, no
-rendering, no mocking of modules. When the test ends, the store is discarded and everything
-with it. The next test starts clean. See [Testing](../category/testing).
+rendering, no mocking of modules.
+
+```tsx
+test('loads the orders of the user', async () => {
+  const store = new Store<State>({
+    initialState: State.initialState,
+    environment: Environment.testing,
+    dependencies: () => new FakeDependencies({ orders: [order1, order2] }),
+  });
+
+  await store.dispatchAndWait(new LoadOrders('user-1'));
+
+  expect(store.state.orders).toEqual([order1, order2]);
+  store.dispose();
+});
+```
+
+When the test ends, the store is discarded and everything with it. The next test starts
+clean. See [Testing](../category/testing).
 
 This is the kind of test I can write quickly and trust, so I write more of them.
 
@@ -152,6 +376,15 @@ that nobody closes. Errors have no place either. One thunk catches and stores an
 string in the state, the next one lets it escape, a third shows a toast from inside the
 component. Dependencies are imported from modules, so a test has to mock modules instead of
 passing fakes in.
+
+Loading and error indicators are state I have to write and keep right. For every async
+thunk, I add a status field and an error field to the slice, then handle three cases in
+`extraReducers`: pending, fulfilled, and rejected. That is the same bookkeeping, repeated for
+every thunk, and it is where I slip. I forget the rejected case, and the spinner never goes
+away. One slice has one status field but three thunks, so loading one thing shows a spinner
+on another. The error is turned into a plain object, so its type is gone, and "what do I
+show the user" is decided per slice, differently each time. In Kiss, there is no flag to get
+wrong, because the component asks the action, with `useIsWaiting` and `useIsFailed`.
 
 The result is a correct state object surrounded by a loose ring of code where every file
 makes its own decisions. See [Comparing with Redux Toolkit](../comparisons/comparing-redux).
@@ -235,6 +468,23 @@ Which queries to refresh after a change is a manual list of keys in `onSuccess`,
 add a new mutation I may forget one. And because all of this lives in components, I can't
 test it without rendering. In Kiss, all of it is in actions, and I test actions by
 dispatching them to a store.
+
+**Loading and error indicators.** Here React Query is closer to Kiss, and I should be fair
+about it. The hook returns `isPending`, `isError`, and `error`, derived for me, not stored.
+The gap is smaller than with Redux, but it is still there, in three places. First, there
+are too many flavors: `isPending`, `isLoading`, `isFetching`, `status`, `fetchStatus`, and
+the rules between them. A background refetch is fetching but not pending. A disabled query
+is pending forever. Placeholder data changes what I get. I pick the wrong one more often
+than I'd like, and the result is a spinner that never ends, or a flash on every refetch. In
+Kiss there is one question, "is this action running", and the answer means what it says.
+Second, commands are different from loads. A query's status comes from the query key, but a
+mutation's status belongs to the `useMutation` call inside one component. If a different
+component needs to know "is checkout running", I have to lift it, or filter with
+`useMutationState` and a mutation key I must type correctly. In Kiss, a load and a command
+are both actions, and any component can ask about either by its class name. Third, the
+error is `unknown`, so whether it is a message for the user or something to log is decided
+wherever the hook is used. In Kiss it is decided once, in the action, by the type of the
+error I throw.
 
 **Where React Query is genuinely good, and why that matters less for me.** To be fair, React
 Query does some things that Kiss leaves to a convention:
