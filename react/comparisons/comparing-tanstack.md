@@ -23,26 +23,45 @@ So, every time TanStack Query "fetches a query again", Kiss "dispatches an actio
 every time TanStack Query asks "is this query loading, stale, or failed?", Kiss asks "is this
 action running, fresh, or failed?".
 
-## Not only queries
+## The big difference
 
-While Redux ignores async processes, leaving them to middleware (like thunks), TanStack Query
-takes the opposite approach, treating all state management as querying, fetching, and caching.
+Redux ignores async work and leaves it to middleware. TanStack Query goes the other way: it
+treats all state management as fetching and caching. Everything is a query.
 
-In my opinion, viewing state management in terms of queries is the **wrong abstraction**. See
-this article in
-Medium: [What I learned from React-Query, and why I will not use it in my next project](https://medium.com/duda/what-i-learned-from-react-query-and-why-i-will-not-use-it-in-my-next-project-a459f3e91887)
+We think that is the wrong starting point. Most apps have data that is not a query result: a
+draft the user is typing, a filter, a selection, a calculation across two lists. With TanStack
+Query, that data has to live somewhere else, in `useState`, in a context, or in a second
+library. (This article says it well:
+[What I learned from React-Query, and why I will not use it in my next project](https://medium.com/duda/what-i-learned-from-react-query-and-why-i-will-not-use-it-in-my-next-project-a459f3e91887).)
 
-Kiss manages state through a synchronous global state, and actions that can be sync or async.
-Actions can fetch data, but they can also change the state in any other way. Actions can fail
-or succeed. You can wait for them to finish, retry them, debounce them, throttle them, and do
-optimistic updates.
+Kiss starts from the state. There is one state object, and actions that change it. An action
+can be sync or async. It can fetch data, but it can also change the state in any other way.
+It can fail or succeed. You can wait for it to finish, retry it, debounce it, throttle it, and
+make it optimistic.
+
+Three things follow from this, and they come up in every section below:
+
+* **The loading rules are on the action, not in the component.** In TanStack Query, "for how
+  long is this data fresh", "retry how many times", and "poll every 10 seconds" are options on
+  a hook, inside a component. Five components can use the same query with five different
+  answers. In Kiss, those rules are declared once, on the action, and every component gets the
+  same answer.
+
+* **Refreshing re-runs the action, not just the fetch.** TanStack Query fetches raw data and
+  stores it. Anything you do with that data, like joining it with other data or reshaping it,
+  happens afterwards, in each component. In Kiss, the action loads the data, transforms it,
+  and puts it where it belongs. That logic runs once, and every component reads the result.
+
+* **The state has a shape you can read.** The query cache has no declared shape. It's a map of
+  string keys. The Kiss state is a class you wrote, so you can see everything the app knows,
+  and how the pieces relate, in one file.
 
 |                           | TanStack Query | Redux Toolkit    | Kiss                |
 |---------------------------|----------------|------------------|---------------------|
 | Sync processes            | No             | Actions/Reducers | Actions/Reducers    |
 | Async processes           | Queries        | Thunks           | Actions/Reducers    |
-| Global local state        | No             | Yes              | Yes                 |
-| Local persistence         | No             | Objects          | Objects and classes |
+| Client state (not from a server) | No      | Yes              | Yes                 |
+| Persistence               | No             | Objects          | Objects and classes |
 | Loading and failed states | Yes            | No               | Yes                 |
 | Deduplication             | Yes            | No               | Yes                 |
 | Smart refetches           | Yes            | No               | Yes                 |
@@ -139,13 +158,14 @@ This is how each part translates:
   selected value changes.
 * `initialData` and `placeholderData` are the `initialState` you give to `createStore`.
 
-## Global local state
+## Client state
 
-TanStack Query has a shared cache for all queries. The cache is global sync state, but it's an
-implementation detail for handling fresh and stale data. It's not meant for direct access.
-That's why the table above says TanStack Query has no "global local state".
+Not all state comes from a server. A counter, a filter, a draft, or a selection is client
+state. TanStack Query has a cache shared by all queries, but the cache is an internal detail
+for keeping data fresh. It's not meant to be used as state. That's why the table above says
+TanStack Query has no client state.
 
-If we want to abuse the cache as local state, we can do something like this:
+If you want to use the cache as client state anyway, you can, but it's awkward:
 
 ```tsx
 function useGlobalLocalState(key, initialValue) {
@@ -172,10 +192,12 @@ function Counter() {
 }
 ```
 
-You have to manage globally unique keys by hand (like `'count'` above), so that they don't
-repeat, and use `initialData`. And there is no type safety when calling `setQueryData`.
+You have to invent unique string keys by hand (like `'count'` above), and make sure they
+never repeat. You need `initialData`. And `setQueryData` has no type safety: a wrong key or a
+wrong value compiles fine.
 
-Kiss has a global local state that is **meant** for direct access:
+In Kiss, client state is just state. It goes in the same `State` class as the server data,
+and is read and changed the same way:
 
 ```tsx
 function Counter() {
@@ -1167,12 +1189,13 @@ const store = createStore<State>({
 
 ## Testing
 
-TanStack Query ties the component to the query. So, testing an app that uses it usually means
-testing UI components, which is more work.
+In TanStack Query, the queries and mutations are declared inside components. So the logic
+lives in the UI tree, and testing it means rendering components, with a `QueryClientProvider`
+around them, and waiting for the hooks to settle. That is more work, and slower.
 
-Kiss doesn't tie the component to the action. You can test the actions and reducers directly,
-without any UI. Kiss also has many features to [help you test](../category/testing) your
-actions:
+In Kiss, the logic lives in actions, and actions don't need components. You create a store,
+dispatch the action, wait for it, and check the state. No rendering. Kiss also has many
+features to [help you test](../category/testing) your actions:
 
 ```ts
 // Start with some IBM stocks.
@@ -1199,3 +1222,22 @@ store.setOnline(false);  // Actions with checkInternet now fail with "No Interne
 store.setFocused(false); // The user went to another tab.
 store.setFocused(true);  // The user came back: the onFocus callbacks run.
 ```
+
+## Why this matters
+
+Line by line, the Kiss code is about as short as the TanStack Query code. The gain is in where
+the decisions live:
+
+* **One place for the rules.** Freshness, retry, polling, and deduplication are declared on
+  the action. You read one class and you know how that data is loaded.
+* **One shape for the data.** Server data and client state live in the same `State` class.
+  You can see how the pieces relate, and you can change the shape when the app grows.
+* **Logic outside the UI.** Loading, transforming, saving, and reloading all happen in
+  actions, so none of it depends on which components are mounted, and all of it can be tested
+  without rendering.
+* **It stays simple when the app grows.** An app that only shows server data is easy either
+  way. When the app gets client logic, Kiss has a place for it, and TanStack Query doesn't.
+
+---
+
+Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
