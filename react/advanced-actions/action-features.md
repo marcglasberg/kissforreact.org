@@ -58,7 +58,7 @@ class (like `OptimisticCommand` or `LoadPages`) instead of your own base action.
 
 Not all features can be combined.
 Kiss throws a `StoreException` when you dispatch an action with incompatible features.
-If you use the [Kiss linter](../ai/setting-up-your-ai-agent#linter), its `incompatible-action-features` rule also
+If you use the [Kiss linter](../intro#linter), its `incompatible-action-features` rule also
 reports them in your editor, before you run the code.
 
 |                                 | check<br/>Internet | non<br/>Reentrant | retry | unlimited<br/>Retry<br/>Check<br/>Internet | throttle | debounce | ignore<br/>Old | fresh | Optimistic<br/>Command | Optimistic<br/>Sync | Optimistic<br/>Sync<br/>WithPush | Server<br/>Push | Load<br/>Pages | polling | sequential |

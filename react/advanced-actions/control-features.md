@@ -985,6 +985,12 @@ To stop all polling at once (for example, on logout), call `stopAllPolling()` fr
 Polling also stops when you call `store.clearInternalActionProps()`, or when the store is shut
 down with `store.setShutDown(true)`.
 
+Stopping polling, in any of these ways or with `Poll.stop`, also stops the actions with
+`Poll.start` or `Poll.runNowAndRestart` that were dispatched before, but had not started polling
+yet (for example, because they were still in an async `before()`). They don't start polling, and
+are aborted (`Poll.stop` only aborts the ones of its own polling key). This way, a component that
+stops polling when it unmounts doesn't leave polling running when its start was still pending.
+
 ### Poll interval
 
 The `pollInterval` is the delay between polling ticks, in milliseconds.
@@ -1051,7 +1057,7 @@ The `poll` property controls the behavior of each dispatch:
 | Value                   | Behavior                                                                                                                        |
 |-------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | `Poll.start`            | Starts polling and runs `reduce` immediately. If polling is already active for this key, does nothing.                          |
-| `Poll.stop`             | Cancels the polling for this key and skips `reduce`.                                                                            |
+| `Poll.stop`             | Cancels the polling for this key and skips `reduce`. Also aborts the actions of this key that would start polling, but had not started it yet. |
 | `Poll.runNowAndRestart` | Runs `reduce` immediately and restarts the polling timer from that moment. If polling is not active, behaves like `Poll.start`. |
 | `Poll.once`             | Runs `reduce` immediately, without affecting the polling (does not start or stop the timer).                                    |
 

@@ -57,3 +57,18 @@
 [data-theme='dark'] .invert-in-dark {
   filter: invert(1);
 }
+
+/* Category index pages (like /react/category/tutorial): show the page cards in a single,
+   compact column, without the page icon. */
+article[class*='docCardListItem'].col {
+  --ifm-col-width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.theme-doc-card-container {
+  padding: 0.75rem 1.25rem !important;
+}
+
+.theme-doc-card-icon {
+  display: none;
+}

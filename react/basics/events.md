@@ -328,7 +328,7 @@ expect(store.isEventSpent(store.state.clearInputEvt)).toBe(true);
 
 ## Lint rules
 
-The [linter](../ai/setting-up-your-ai-agent#linter) has two rules for events:
+The [linter](../intro#linter) has two rules for events:
 
 - `event-name-suffix`: name event fields with the `Evt` suffix.
 - `event-not-spent-initially`: use `Evt.spent()` in the initial state, not `new Evt()`,

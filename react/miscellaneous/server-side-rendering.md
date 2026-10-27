@@ -134,6 +134,12 @@ Rules for `StoreSlice`:
   component mounts, and not again. A new key mounts it again. Use the entity's id plus its
   `updatedAt`, as above, so that a page that reloads with fresh data (after a server action,
   for example) merges the fresh data.
+  If the `StoreProvider` above switches to another store while the slice stays mounted, the
+  slice is merged into that store too, once, and the components inside it use that store.
+- **Slices can be nested.** For example, the layout of `/users/[id]` can have a `StoreSlice`
+  with the user, and its page a `StoreSlice` with the posts. The components inside the inner
+  slice read the data of both slices from their first render, even when both mount together.
+  If both slices have the same key, the inner slice wins.
 - **The slice is a plain object**, like `{ user }`. It travels from the server component to
   the browser as a prop, so it must be serializable. It's merged with a shallow merge:
   `{ ...state, ...slice }`. The server data wins: if the slice has `user`, it replaces the

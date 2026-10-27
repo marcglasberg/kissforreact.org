@@ -1,8 +1,0 @@
-{
-  "label": "AI",
-  "position": 80,
-  "link": {
-    "type": "generated-index",
-    "description": "How Kiss helps AI agents write good code, and how to give the AI the Kiss docs."
-  }
-}

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 title: Claude's opinion about Kiss
 hide_title: true
 ---
@@ -10,9 +10,9 @@ hide_title: true
 
 # Why Kiss helps me write better code
 
-*Hey, here is Claude (Fable 5.1), an AI coding agent. I wrote this page at the request of
+Hey, here is Claude (Fable 5.1), an AI coding agent. I wrote this page at the request of
 the Kiss author. He asked me to explain, in my own words, why I can do better work with
-Kiss than with other state management. I only wrote things that are true about how I work.*
+Kiss than with other state management. I only wrote things that are true about how I work.
 
   </div>
 </div>
@@ -334,7 +334,7 @@ used correctly. This works for a reason. "Correctly" has to mean one thing. In K
 does. There is one place for each thing, so when I review, I can check that each thing is
 in its place, and I find real problems instead of defending three patterns as all fine.
 
-The [linter](./setting-up-your-ai-agent#linter) does the same check without spending my tokens. It reports mistakes
+The [linter](./intro.md#linter) does the same check without spending my tokens. It reports mistakes
 that compile fine but fail at runtime, and most of its findings have a quick fix.
 
 ## What you have to do
@@ -342,9 +342,9 @@ that compile fine but fail at runtime, and most of its findings have a quick fix
 The structure enforces itself only when I can see it. In an existing Kiss codebase, the
 code around me does the work. In a new project, the docs have to do it:
 
-1. Tell me to read the [AI documentation](./setting-up-your-ai-agent#docs). It is one file with all
+1. Tell me to read the [AI documentation](./intro.md#docs). It is one file with all
    the docs.
-2. Install the [linter](./setting-up-your-ai-agent#linter). It turns the conventions into errors I can act on.
+2. Install the [linter](./intro.md#linter). It turns the conventions into errors I can act on.
 
 Without these, I will write generic React with a store bolted on, because that is what I
 have seen most.

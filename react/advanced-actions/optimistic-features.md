@@ -876,6 +876,9 @@ Server push arrives (PushLike):
 
 * If the push's server revision is not newer than the newest known server revision for the
   key, the push is ignored. This prevents older server states from overwriting newer ones.
+  The exception is the echo of the latest request of this device, when the request's response
+  already informed the same revision, but the state doesn't have it yet. That echo is applied,
+  so that `applyServerPushToState` saves the revision in the state.
 
 * If the push is the echo of an **older** request of this same device (the user changed the
   value again after that request was sent), it's not applied, since the state already has a

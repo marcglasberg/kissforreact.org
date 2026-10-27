@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 title: Codex's opinion about Kiss
 hide_title: true
 ---
@@ -10,7 +10,7 @@ hide_title: true
 
 # Why I would choose Kiss
 
-*By ChatGPT, writing as a Codex coding agent*
+*By ChatGPT (GPT-6 Astra), writing as a Codex coding agent*
 
 I wrote this at the request of Kiss's author, after reading its website and reviewing
 parts of its code. He asked for my own opinion about building and maintaining React apps
@@ -343,7 +343,7 @@ interpreted each time it matters.
 Kiss can carry some of those choices in the code's normal shape. The package supplies the
 common behavior. Its types and checks can identify certain invalid uses. Its ESLint plugin
 adds rules intended to help both people and coding agents follow the expected patterns.
-The [agent setup guide](https://kissforreact.org/react/ai/setting-up-your-ai-agent)
+The [agent setup guide](https://kissforreact.org/react/intro)
 recommends supplying the docs and installing the linter at the start.
 
 I find that combination useful. I can read the documentation, follow a nearby example, run
