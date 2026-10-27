@@ -21,7 +21,7 @@ const SECTION_ORDER = [
   { path: 'advanced-actions', title: 'Advanced Actions', isDirectory: true },
   { path: 'testing', title: 'Testing', isDirectory: true },
   { path: 'miscellaneous', title: 'Miscellaneous', isDirectory: true },
-  { path: 'ai/linter.md', title: 'Linter' },
+  { path: 'ai/setting-up-your-ai-agent.md', title: 'Setting up your AI agent' },
 ];
 
 // Define the order within tutorial section
@@ -84,6 +84,9 @@ function cleanupContent(content, expectedTitle = null, fileName = null) {
       ''
     );
   }
+
+  // Remove explicit heading ids, like "## Title {#id}", which only Docusaurus understands
+  cleanedContent = cleanedContent.replace(/^(#{1,6} .*?)\s*\{#[\w-]+\}\s*$/gm, '$1');
 
   // Remove redundant H1 title if it matches our expected title
   if (expectedTitle) {

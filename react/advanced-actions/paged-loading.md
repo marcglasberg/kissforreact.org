@@ -264,6 +264,6 @@ class LoadTodos extends LoadPages<State, Todo[], number> {
   `'refresh'`.
 
 * Don't override `reduce`, `abortDispatch` or `statusKey`. The
-  [Kiss linter](../ai/linter) reports these overrides.
+  [Kiss linter](../ai/setting-up-your-ai-agent#linter) reports these overrides.
 
 * Nothing is kept in the store for this feature, so there is nothing to clear on logout.

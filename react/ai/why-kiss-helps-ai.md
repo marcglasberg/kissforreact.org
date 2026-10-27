@@ -335,7 +335,7 @@ used correctly. This works for a reason. "Correctly" has to mean one thing. In K
 does. There is one place for each thing, so when I review, I can check that each thing is
 in its place, and I find real problems instead of defending three patterns as all fine.
 
-The [linter](./linter) does the same check without spending my tokens. It reports mistakes
+The [linter](./setting-up-your-ai-agent#linter) does the same check without spending my tokens. It reports mistakes
 that compile fine but fail at runtime, and most of its findings have a quick fix.
 
 ## What you have to do
@@ -343,9 +343,9 @@ that compile fine but fail at runtime, and most of its findings have a quick fix
 The structure enforces itself only when I can see it. In an existing Kiss codebase, the
 code around me does the work. In a new project, the docs have to do it:
 
-1. Tell me to read the [AI documentation](./using-ai-documentation). It is one file with all
+1. Tell me to read the [AI documentation](./setting-up-your-ai-agent#docs). It is one file with all
    the docs.
-2. Install the [linter](./linter). It turns the conventions into errors I can act on.
+2. Install the [linter](./setting-up-your-ai-agent#linter). It turns the conventions into errors I can act on.
 
 Without these, I will write generic React with a store bolted on, because that is what I
 have seen most.
