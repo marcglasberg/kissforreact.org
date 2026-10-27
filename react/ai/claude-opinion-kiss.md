@@ -1,6 +1,6 @@
 ---
 sidebar_position: 1
-title: Why Kiss helps me write better code
+title: Claude's opinion about Kiss
 hide_title: true
 ---
 

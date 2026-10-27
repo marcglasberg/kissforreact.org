@@ -52,3 +52,8 @@
   position: relative;
   z-index: 1; /* Ensure the content is above the background */
 }
+
+/* Black logos (e.g. OpenAI) turn white in dark mode. */
+[data-theme='dark'] .invert-in-dark {
+  filter: invert(1);
+}
