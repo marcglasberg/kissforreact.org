@@ -58,6 +58,11 @@
   filter: invert(1);
 }
 
+/* Lists where each item starts with a logo: the logo replaces the bullet. */
+.logo-list ul {
+  list-style: none;
+}
+
 /* Category index pages (like /react/category/tutorial): show the page cards in a single,
    compact column, without the page icon. */
 article[class*='docCardListItem'].col {
