@@ -82,14 +82,15 @@ function cleanupContent(content, expectedTitle = null, fileName = null) {
       /## How does it compare\?[\s\S]*?<hr><\/hr>\s*/g,
       ''
     );
-
-    // Remove the "What the AIs say" section. Its links go to the opinion pages,
-    // which are not in this file, and they are meant for people, not for the AI.
-    cleanedContent = cleanedContent.replace(
-      /## What the AIs say[\s\S]*?(?=^## )/m,
-      ''
-    );
   }
+
+  // Remove the lists of links to the Claude and Codex opinion pages, and the sentence that
+  // introduces each list (a line that ends with ":"). The opinion pages are not in this file,
+  // and the links are meant for people, not for the AI.
+  cleanedContent = cleanedContent.replace(
+    /^(?:[^\n]*:[ \t]*\n\n)?(?:[*-] [^\n]*opinion-kiss[^\n]*(?:\n|$))+/gm,
+    ''
+  );
 
   // Remove the list of opinion links, with the Claude and OpenAI logos, from the homepage
   // overview. The opinion pages are not in this file, and the links are meant for people.

@@ -17,6 +17,11 @@ Kiss (Keep It Simple State) is a state management package for React, built for A
 - Promotes less token usage, saving money!
 - For the human: Final code is easy to read and understand
 
+Two AI coding agents explain, in their own words, what they think of Kiss:
+
+* [Claude's opinion about Kiss](./claude-opinion-kiss.md)
+* [Codex's opinion about Kiss](./codex-opinion-kiss.md)
+
 Created by [Marcelo Glasberg](https://github.com/marcglasberg).
 
 ## Installation
@@ -76,13 +81,6 @@ To install it, ask your agent:
 
 The [package's page on npm](https://www.npmjs.com/package/eslint-plugin-kiss-for-react)
 explains how to install it yourself, and has the full list of rules.
-
-## What the AIs say
-
-We asked two AI coding agents to explain, in their own words, what they think of Kiss:
-
-* [Claude's opinion about Kiss](./claude-opinion-kiss.md)
-* [Codex's opinion about Kiss](./codex-opinion-kiss.md)
 
 ## Next steps
 
