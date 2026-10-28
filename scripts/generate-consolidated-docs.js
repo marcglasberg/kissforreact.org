@@ -82,7 +82,18 @@ function cleanupContent(content, expectedTitle = null, fileName = null) {
       /## How does it compare\?[\s\S]*?<hr><\/hr>\s*/g,
       ''
     );
+
+    // Remove the "What the AIs say" section. Its links go to the opinion pages,
+    // which are not in this file, and they are meant for people, not for the AI.
+    cleanedContent = cleanedContent.replace(
+      /## What the AIs say[\s\S]*?(?=^## )/m,
+      ''
+    );
   }
+
+  // Remove the list of opinion links, with the Claude and OpenAI logos, from the homepage
+  // overview. The opinion pages are not in this file, and the links are meant for people.
+  cleanedContent = cleanedContent.replace(/<div className="logo-list">[\s\S]*?<\/div>\s*/g, '');
 
   // Remove explicit heading ids, like "## Title {#id}", which only Docusaurus understands
   cleanedContent = cleanedContent.replace(/^(#{1,6} .*?)\s*\{#[\w-]+\}\s*$/gm, '$1');
