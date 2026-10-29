@@ -6,7 +6,8 @@ sidebar_position: 4
 
 This page is for people who know MobX. It shows how to get the same results with Kiss, which
 does things in a different way. Each section shows the MobX code first, and then the Kiss code
-that does the same.
+that does the same. If you use Valtio, most of this page applies to it too, and the
+[Valtio](#valtio) section at the end translates it.
 
 MobX is based on **observable** state. You put your state in class fields, mark them as
 observable, and change them by assigning to them. MobX watches which fields each component
@@ -927,6 +928,85 @@ Side by side:
 | Reference to another object | `types.reference`                    | `Ref`, `rootRef`                      | An id in the state, and a selector          |
 | Error in the data           | At runtime, inside the library       | At runtime, inside the library        | At compile time, in your code               |
 | Extra concepts to learn     | Many                                 | Many                                  | None                                        |
+
+## Valtio
+
+[Valtio](https://valtio.dev) is the same idea as MobX, with a smaller API. `proxy` wraps a
+plain object, and you change it by assigning to it, from anywhere. In a component,
+`useSnapshot` gives you a read-only snapshot of it, and re-renders the component when the
+fields it read change:
+
+```tsx title="Valtio"
+import { proxy, useSnapshot } from 'valtio';
+
+const state = proxy({ todos: [] as Todo[], isLoading: false, error: null as string | null });
+
+// Change it from anywhere.
+function addTodo(todo: Todo) {
+  state.todos.push(todo);
+}
+
+async function loadTodos() {
+  state.isLoading = true;
+  state.error = null;
+  try {
+    state.todos = await api.loadTodos();
+  } catch (error) {
+    state.error = String(error);
+  } finally {
+    state.isLoading = false;
+  }
+}
+
+function TodoList() {
+  const snap = useSnapshot(state);
+  useEffect(() => { loadTodos(); }, []);
+
+  if (snap.isLoading) return <Spinner />;
+  if (snap.error) return <p>{snap.error}</p>;
+  return <ul>{snap.todos.map((todo) => <li key={todo.id}>{todo.title}</li>)}</ul>;
+}
+```
+
+Valtio removes some of the MobX friction. There is no `observer` to forget, no
+`makeAutoObservable`, and an async function can assign after an `await`, with no `runInAction`
+or `flow`. And the component reads an immutable snapshot, not the live object.
+
+The rest of this page applies to Valtio as it does to MobX:
+
+* **A change has no name.** Any function, component, or module can assign to the proxy. In
+  Kiss, every change is an action.
+* **Loading and failure are fields you keep by hand,** as `isLoading` and `error` above. In
+  Kiss, `useIsWaiting(LoadTodos)` and `useIsFailed(LoadTodos)` answer for you.
+* **There are two objects to keep apart.** In the render, you read `snap`. In callbacks, you
+  write to `state`. Reading `state` in the render doesn't subscribe the component, so it doesn't
+  update. And a component that uses a snapshot without reading its fields re-renders on any
+  change inside it. In Kiss, the component reads with `useSelect`, and changes with `dispatch`.
+* **The proxy is a module singleton,** like a Zustand store. Tests and server-side rendering
+  must take care that one test, or one request, doesn't see the state of another. In Kiss, each
+  test and each request creates its own store.
+* **Retry, debounce, and fresh data are by hand.** In Kiss, they are
+  [action features](../advanced-actions/action-features).
+
+This is how Valtio translates to Kiss:
+
+| Valtio                                                      | Kiss                                                                      |
+|-------------------------------------------------------------|---------------------------------------------------------------------------|
+| `proxy({ ... })`                                            | A `State` class, given to `createStore`                                   |
+| `useSnapshot(state)`, reading `snap.todos`                  | `useSelect((state) => state.todos)`, `useObject`                          |
+| Assigning to `state`                                        | Dispatching an action                                                     |
+| An async function that assigns after `await`                | `async reduce()`                                                          |
+| `isLoading` and `error` fields                              | `useIsWaiting(Action)`, `useIsFailed(Action)`, `useExceptionFor(Action)`  |
+| A promise in the state, and `use(snap.data)` with Suspense  | `useSuspense(Action)`                                                     |
+| Getters on the proxy, or `derive-valtio`                    | Getters on the `State` class, a `Selector` class, or a cached field      |
+| `subscribe`, `subscribeKey`                                 | An action that dispatches another; `dispatchWhen`; `stateObserver`        |
+| `snapshot(state)`                                           | `store.state`. It's already a value.                                      |
+| `ref()` (keep an object out of the proxy)                   | Store props                                                               |
+| `devtools(state)`                                           | `actionObserver`, `stateObserver`                                         |
+| `valtio-history` (undo)                                     | `stateObserver` and `UpdateStateAction`                                   |
+| Persisting with `subscribe` and `localStorage`              | The persistor                                                             |
+
+The sections above explain each Kiss feature, with code.
 
 ## Why this matters
 

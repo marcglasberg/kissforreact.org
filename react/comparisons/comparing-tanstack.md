@@ -6,7 +6,8 @@ sidebar_position: 2
 
 This page is for people who know TanStack Query (also called React Query). It shows how to get
 the same results with Kiss, which does things in a different way. Each section shows the
-TanStack Query code first, and then the Kiss code that does the same.
+TanStack Query code first, and then the Kiss code that does the same. If you use SWR, most of
+this page applies to it too, and the [SWR](#swr) section at the end translates its options.
 
 TanStack Query is an asynchronous state management package based on **queries** and a **cache**.
 A query fetches data from a server (with [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API),
@@ -1222,6 +1223,63 @@ store.setOnline(false);  // Actions with checkInternet now fail with "No Interne
 store.setFocused(false); // The user went to another tab.
 store.setFocused(true);  // The user came back: the onFocus callbacks run.
 ```
+
+## SWR
+
+[SWR](https://swr.vercel.app), by Vercel, is built on the same idea as TanStack Query: a hook
+with a key and a function that fetches, a cache that the library owns, and new fetches when a
+component mounts, when the user comes back to the tab, when the internet comes back, and at
+intervals. The key is often the URL itself. SWR is smaller, with fewer options, and no devtools:
+
+```tsx title="SWR"
+import useSWR from 'swr';
+
+function TextScreen() {
+  const { data, error, isLoading, isValidating } = useSWR('/api/text', fetcher, {
+    refreshInterval: 10000,
+  });
+
+  if (isLoading) return <Spinner />;
+  if (error) return <p>{error.message}</p>;
+  return <>{isValidating && <SmallSpinner />}<pre>{data}</pre></>;
+}
+```
+
+The Kiss version is the same as in [First load and refresh](#first-load-and-refresh), with
+[polling](#polling) for the `refreshInterval`. Everything in
+[The big difference](#the-big-difference) applies to SWR as it does to TanStack Query: the cache
+is for server data only, the loading rules are options in each component, and the cache has no
+shape of its own. With SWR, the keys are usually URLs, so the components also know the
+endpoints of your API.
+
+This is how SWR translates to Kiss:
+
+| SWR                                                                     | Kiss                                                                    |
+|-------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| `useSWR(key, fetcher)`                                                  | An async action that puts the data in the state, and `useSelect`        |
+| The `key`                                                               | The action class, and its constructor parameters                        |
+| A `null` key (don't fetch yet)                                          | Don't dispatch yet; or `dispatchWhen`                                   |
+| `isLoading` (no data yet)                                               | The state has no data yet, and `useIsWaiting(Action)`                   |
+| `isValidating` (any fetch, also a refresh)                              | `useIsWaiting(Action)`                                                  |
+| `error`                                                                 | `useIsFailed(Action)`, `useExceptionFor(Action)`                        |
+| `dedupingInterval` (2 seconds, by default)                              | `fresh`, `nonReentrant`                                                 |
+| `revalidateOnMount`, `revalidateIfStale`                                | `useStoreEffect({ onMount })`                                           |
+| `revalidateOnFocus`, `revalidateOnReconnect` (on, by default)           | `useStoreEffect({ onFocus, onOnline })`                                 |
+| `refreshInterval`                                                       | Polling: `pollInterval`, `Poll.start`, `Poll.stop`                      |
+| `refreshWhenHidden`, `refreshWhenOffline` (off, by default)             | `pollOnlyWhenFocused`, `pollOnlyWhenOnline` (on, by default)            |
+| `shouldRetryOnError`, `errorRetryCount`, `onErrorRetry` (on, by default) | `retry`, `shouldRetry` (off, by default)                               |
+| `keepPreviousData`                                                      | `ignoreOld` (the state keeps the old data until the new one arrives)    |
+| `suspense: true`                                                        | `useSuspense(Action)`                                                   |
+| `fallbackData`, the `fallback` of `SWRConfig`                           | The `initialState`; `serverState` and `StoreSlice` on the server       |
+| `mutate(key, data)` (change the cache)                                  | A sync action                                                           |
+| `mutate(key)` (fetch again)                                             | Dispatch the action again                                               |
+| `useSWRMutation`, `trigger`, `isMutating`                               | An action, and `useIsWaiting(Action)`                                   |
+| `optimisticData`, `rollbackOnError`                                     | `OptimisticCommand`, `OptimisticSync`                                   |
+| `useSWRInfinite`, `size`, `setSize`                                     | `LoadPages`                                                             |
+| `SWRConfig` (options for all the hooks)                                 | A [base action](../advanced-actions/base-action-with-common-logic)      |
+| Debounce, throttle, run one at a time (not in SWR)                      | `debounce`, `throttle`, `sequential`                                    |
+
+The sections above explain each Kiss feature, with code.
 
 ## Why this matters
 
