@@ -121,11 +121,11 @@ for me:
 
 ```tsx
 class LoadOrders extends Action {
-  fresh = 60000;          // Don't reload for 60 seconds. The data is still fresh.
-  retry = { on: true };   // If it fails, try again.
-  checkInternet = true;   // If there is no internet, fail at once with a clear message.
+  fresh = 60000;                     // Don't reload for 60 seconds. The data is still fresh.
+  retry = { on: true };              // If it fails, try again.
+  checkInternet = { dialog: true };  // If there is no internet, fail at once with a clear message.
 
-  async reduce() { ... }  // Same as before. The features wrap it.
+  async reduce() { ... }             // Same as before. The features wrap it.
 }
 ```
 

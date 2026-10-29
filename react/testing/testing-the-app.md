@@ -141,7 +141,7 @@ it('should create user and reset name', async () => {
     new StartLoginAction()
   ]);
 
-  expect(store.state.user).toBe(User('John'));
+  expect(store.state.user).toEqual(new User('John'));
   expect(store.state.name).toBe('');
 });
 ```

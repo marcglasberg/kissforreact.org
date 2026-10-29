@@ -158,11 +158,25 @@ import { KissAction } from 'kiss-for-react';
 import { State } from 'State';
 
 export abstract class Action extends KissAction<State> {
-  barrier = false;  
-  before() { if (this.barrier) this.dispatch(new BarrierAction(true)); }
-  after() { if (this.barrier) this.dispatch(new BarrierAction(false)); }  
+  barrier = false;
+
+  before() {
+    if (this.barrier) this.dispatch(new BarrierAction(true));
+    return super.before(); // Don't remove. It runs the checkInternet check.
+  }
+
+  after() { if (this.barrier) this.dispatch(new BarrierAction(false)); }
 }
 ```
+
+Note `before()` calls `super.before()`, and returns its result. The default `before()` is
+where [`checkInternet`](./internet-features#checkinternet) checks the internet connection.
+Without this call, `checkInternet` would stop working for all the actions that extend this
+base action.
+
+Returning the result of `super.before()`, instead of using `async` and `await`, keeps sync
+actions sync. An action is async if its `before()` returns a Promise, and `super.before()`
+returns a Promise only when there is an internet check to wait for.
 
 Now you can add `barrier = true;` in all your desired actions,
 to provide `before()` and `after()` by default:

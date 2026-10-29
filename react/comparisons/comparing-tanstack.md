@@ -110,7 +110,7 @@ explain each line, with code.
 | `useInfiniteQuery`, `fetchNextPage`, `hasNextPage`                  | `LoadPages`, dispatched with `'next'`, and the `Pages` value in the state                    |
 | `invalidateQueries`                                                 | Not needed: the action that saves reloads what it needs                                      |
 | `setQueryData`                                                      | A sync action                                                                                |
-| `useIsFetching`, `useIsMutating`                                    | `useIsWaiting(A) \|\| useIsWaiting(B)`; or `store.actionsInProgress()`                       |
+| `useIsFetching`, `useIsMutating`                                    | One `useIsWaiting` per action, then `\|\|`; or `store.actionsInProgress()`                   |
 | `dehydrate`, `hydrate`, `HydrationBoundary`                         | `serverState`, `StoreSlice`                                                                  |
 | `persistQueryClient`                                                | The persistor                                                                                |
 | `QueryClient.clear()`, `removeQueries`                              | `store.logOut()`, `store.clearInternalActionProps()`, a reset action                         |
@@ -1075,7 +1075,10 @@ const isFetching = useIsFetching();
 In Kiss, list the actions the bar should show:
 
 ```tsx
-const isLoading = useIsWaiting(LoadUser) || useIsWaiting(LoadPosts);
+// One hook per line. Writing `useIsWaiting(A) || useIsWaiting(B)` would break the rules of hooks.
+const isLoadingUser = useIsWaiting(LoadUser);
+const isLoadingPosts = useIsWaiting(LoadPosts);
+const isLoading = isLoadingUser || isLoadingPosts;
 ```
 
 This is on purpose. In TanStack Query, the library owns every request, so counting them makes
