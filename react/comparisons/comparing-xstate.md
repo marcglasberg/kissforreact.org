@@ -5,8 +5,8 @@ sidebar_position: 5
 # Comparing with XState
 
 This page is for people who know XState. It shows how to get the same results with Kiss, which
-does things in a different way. Each section shows the XState code first, and then the Kiss
-code that does the same.
+does things in a different way, and what changes when an AI agent writes the code. Each section
+shows the XState code first, and then the Kiss code that does the same.
 
 XState is based on **state machines** and **actors**. A machine lists the states it can be in,
 like `idle`, `loading` and `failure`, and the events that move it from one state to another.
@@ -1088,6 +1088,33 @@ see drawn. The cost shows up when the whole app goes through it:
 * **The data is split across actors.** Each actor keeps its context to itself, so the parts of
   the app talk with events. In Kiss, there is one state, and every action can read all of it.
 
+## When an AI agent writes the code
+
+When your agent writes the code and you review it, this is what changes:
+
+* **One class, not three places.** In XState, each change is a type in the event union, a
+  transition in the machine, and often a name in `setup`, with targets that are strings. Your
+  agent must keep all of them in sync. And an event that the current state doesn't handle is
+  ignored, with no error, so a transition put in the wrong state is easy to miss in a review.
+  In Kiss, a change is one class, which you read from top to bottom.
+* **No states to write for every request.** For each request, your agent writes a `loading`
+  state, a `failure` state, `onDone`, `onError`, and an `error` field, as in
+  [Async changes](#async-changes). Retry and debounce are more states and `after`. Each one is
+  written by hand, and a little differently each time. In Kiss, your agent writes
+  `async reduce()`, and declares `retry` or `debounce` on the action. The store keeps the status.
+* **Checks your agent can run.** XState machines can be tested without a UI too. In Kiss, your
+  agent tests an action with `dispatchAndWait`, with no rendering, and no state names to wait
+  for. It also runs `npx eslint` with the Kiss ESLint plugin, which finds mistakes that compile
+  fine, like using the old state after an `await` (`stale-state-after-await`).
+* **Where XState is ahead.** For a long flow, the diagram and the inspector let you check what
+  your agent built, at a glance. Kiss has nothing like it: you read the state class and the
+  actions. Also, agents have seen much more XState code than Kiss code. But XState v5 renamed a
+  lot (`interpret` became `createActor`, and `cond` became `guard`), so an agent that learned
+  both versions can mix them. Kiss makes up for having less training data with the single-file
+  docs, the linter, and the code already in your project, which shows your agent the pattern.
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+machines with Kiss.

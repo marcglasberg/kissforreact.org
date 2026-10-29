@@ -5,8 +5,8 @@ sidebar_position: 8
 # Comparing with Effector
 
 This page is for people who know Effector. It shows how to get the same results with Kiss,
-which does things in a different way. Each section shows the Effector code first, and then the
-Kiss code that does the same.
+which does things in a different way, and what changes when an AI agent writes the code. Each
+section shows the Effector code first, and then the Kiss code that does the same.
 
 Effector is based on **units**: events, stores, and effects. An event is a message. A store
 holds one value, and changes it with `.on(event, reducer)`. An effect is an async function, with
@@ -34,7 +34,8 @@ server-side rendering and tests clean.
 
 The cost is that one feature is spread over many units. To know what happens when the user logs
 in, you follow the wires: the event, the effect it triggers, the `doneData` of the effect, the
-stores that reduce it, the `sample` calls that start other effects. And `sample`, `combine`,
+stores that reduce it, the `sample` calls that start other effects. This is hard for a person,
+and harder for an AI agent that reads only part of the code at a time. And `sample`, `combine`,
 `attach`, gates, and the operators from `patronum` are a lot to learn before the code reads
 naturally.
 
@@ -769,6 +770,33 @@ logic that can be tested without a UI. The difference is in how the logic is org
 * **One library, or a family.** Debounce is in `patronum`, retry and freshness are in
   Farfetched, and persistence is in `effector-storage`. In Kiss, they are part of the action.
 
+## When an AI agent writes the code
+
+When your agent writes the code and you review it, this is what changes:
+
+* **One feature, one place.** In Effector, a feature is spread over `.on` calls, effects and
+  `sample` calls, often in several files. When your agent changes the feature, it must find all
+  of them. An edit that misses one still compiles, and the app just does less. For example, a
+  new store without its `.reset` keeps the old user's data, as in
+  [Resetting the state](#resetting-the-state). In Kiss, your agent changes one action, and you
+  review one class.
+* **Fewer concepts to get right.** `sample`, `combine`, `attach`, gates, `patronum` and
+  Farfetched each have their own rules, and your agent must use each one the way your project
+  does. In Kiss, most of the code is a state class and actions, and retry, debounce and
+  freshness are properties on the action.
+* **Checks your agent can run.** Effector tests with `fork` and `allSettled` are good. In Kiss,
+  your agent tests an action with `dispatchAndWait`, with no rendering, and the test covers the
+  action it dispatches, not a chain of `sample` calls. It also runs `npx eslint` with the Kiss
+  ESLint plugin, which finds mistakes that compile fine, like using the old state after an
+  `await` (`stale-state-after-await`).
+* **What Effector does well.** Effector's model is close to Kiss's, and its scopes make tests
+  clean. It also has a mature ESLint plugin, `eslint-plugin-effector`, so with both libraries
+  your agent gets a linter. And agents have seen far less of either library than of Redux. Kiss
+  makes up for it with the single-file docs, and with the code already in your project, which
+  shows your agent the pattern.
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+Effector models with Kiss.

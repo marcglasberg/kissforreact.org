@@ -5,8 +5,9 @@ sidebar_position: 9
 # Comparing with Preact Signals
 
 This page is for people who use Preact Signals in React, with the `@preact/signals-react`
-package. It shows how to get the same results with Kiss, which does things in a different way.
-Each section shows the Signals code first, and then the Kiss code that does the same.
+package. It shows how to get the same results with Kiss, which does things in a different way,
+and what changes when an AI agent writes the code. Each section shows the Signals code first,
+and then the Kiss code that does the same.
 
 Signals are based on **reactive values**. A signal is a small box that holds one value. You
 read it and change it through `.value`. When a component reads a signal, it subscribes to it,
@@ -46,8 +47,9 @@ Three things follow from this, and they come up in every section below:
 
 * **Mistakes are loud, not silent.** The common Signals mistakes in React, like a component the
   Babel transform didn't detect, a signal read inside a render prop, or a `push` into the array
-  inside a signal, don't throw. The screen just stays stale. In Kiss, those mistakes can't be
-  made, because there is nothing to track and nothing to mutate.
+  inside a signal, don't throw. The screen just stays stale, and there's no error for you, or for
+  an AI agent, to read and fix. In Kiss, those mistakes can't be made, because there is nothing
+  to track and nothing to mutate.
 
 * **The state is one value.** With Signals, the app's data is spread across many signals, in
   many modules. There is no single object you can log, save, compare, or restore. In Kiss, the
@@ -751,6 +753,37 @@ grows:
   all need one object that holds the app's data. Signals don't have it, so you build it. In Kiss,
   it's the state.
 
+## When an AI agent writes the code
+
+Signals code is short, and quick for an AI agent to write. The hard part is checking it, for the
+agent and for you:
+
+* **Mistakes it can't see.** The mistakes in [Components](#components) give no error. The screen
+  doesn't update, and unless your agent opens the app and looks, it reports the work as done. In
+  Kiss, those mistakes can't be made. A test runs the action with `dispatchAndWait`, with nothing
+  rendered and no signals to reset, so your agent can check its own work. And `npx eslint`, with
+  the [Kiss ESLint plugin](../getting-started/intro.md#linter), reports the Kiss mistakes that
+  compile but fail at runtime, like a state changed in place, or `store.state` read in the
+  render.
+* **Old examples that still compile.** Older versions of `@preact/signals-react` tracked the
+  components by themselves. Now, tracking needs the Babel transform or `useSignals()`, as
+  [Components](#components) explains. An agent that learned from older code can write a
+  component that compiles, runs, and never updates. In Kiss, a component reads the state with
+  `useSelect`, with no plugin, and nothing to call at the top of the component.
+* **Effect dependencies you can't read.** What an `effect` depends on is what it read while it
+  ran, as [Side effects](#side-effects) explains. Your agent must remember `peek()` and
+  `untracked()` each time, and you must notice when they're missing. In Kiss, an action
+  dispatches the next one, so what runs after what is written in the code.
+* **Where Signals are ahead.** Signals need very little code: a signal is one line, and a change
+  is one assignment. A signal rendered in JSX updates its text without re-rendering the
+  component, and Kiss has nothing like that. And Solid, Angular and Svelte 5 use the same idea,
+  so agents have seen it many times. Kiss makes up for this with the
+  [single-file docs](../getting-started/intro.md#docs), which give your agent the whole API, with
+  the linter, and with the code already in the project, which shows the agent the pattern for the
+  next feature.
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+signal modules with Kiss.

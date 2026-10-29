@@ -6,8 +6,9 @@ sidebar_label: Comparing with React Context
 # Comparing with React Context and useReducer
 
 This page is for people who think "we don't need a state library: React already has Context,
-`useState` and `useReducer`". It shows how to get the same results with Kiss. Each section shows
-the plain React code first, and then the Kiss code that does the same.
+`useState` and `useReducer`". It shows how to get the same results with Kiss, and what changes
+when an AI agent writes the code. Each section shows the plain React code first, and then the
+Kiss code that does the same.
 
 React has three tools for state. `useState` keeps a value inside a component. `useReducer` does
 the same, but moves the changes into a **reducer**: a function that gets the state and an action,
@@ -38,8 +39,9 @@ before pressing "Send", that state belongs to the component, and `useState` is t
 with or without Kiss.
 
 The trouble starts with state that the app shares. Then you build the store yourself: a context,
-a provider, a reducer, custom hooks, loading flags, and an effect for each request. Each team, and
-each feature, builds it a little differently. Kiss is that store, already built.
+a provider, a reducer, custom hooks, loading flags, and an effect for each request. Each team, each
+feature, and each agent session builds it a little differently. It's also what an AI agent
+usually writes when nobody picks a library for it. Kiss is that store, already built.
 
 Three things follow from this, and they come up in every section below:
 
@@ -798,6 +800,34 @@ use it. The cost shows up when the state is shared, and the app grows:
 * **The state is stuck inside the tree.** Code outside React can't reach it, and tests must render
   it. In Kiss, the store is an object: actions, plain code, and tests all use it directly.
 
+## When an AI agent writes the code
+
+When your agent writes the code and you review it, this is what changes:
+
+* **Plain React is your agent's default.** If nobody picks a library, your agent builds the
+  store from React's parts: contexts, providers, a reducer, `useState` loading flags, and a
+  `useEffect` with an `ignore` flag for each request (see [Async changes](#async-changes)). It
+  builds it again, a little differently, in each feature and each session. With Kiss, the store
+  is already built, and each new feature looks like the last one.
+* **The hand-written parts are declared.** In plain React, retry, debounce, fresh data, and race
+  conditions are code in each component that needs them. Your agent writes that code again each
+  time, and a small mistake, like a missing cleanup, fails silently. In Kiss, they are action
+  features, like `debounce` and `ignoreOld`. You check one line, not a block of effect code.
+* **Checks it can run itself.** Testing async logic in plain React means `renderHook`, a provider
+  as the wrapper, and modules mocked by name (see [Testing](#testing)). In Kiss, your agent
+  creates a store with fake dependencies, calls `dispatchAndWait`, and checks the state, with no
+  rendering. With the [Kiss ESLint plugin](../getting-started/intro.md#linter), it also runs
+  `npx eslint` to find mistakes that compile fine, like a dispatch that runs on every render, and
+  fixes them before you see the code.
+* **Where plain React is ahead.** There is no dependency to add, and React's own tools are what
+  agents know best. Your agent has seen far more plain React than Kiss. React also has
+  `eslint-plugin-react-hooks`, and its rules of hooks still apply to Kiss's hooks, like
+  `useSelect`. Kiss makes up for the training data with the
+  [single-file docs](../getting-started/intro.md#docs), its own linter, and the code already in
+  your project, which shows your agent the pattern to follow.
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+contexts with Kiss.

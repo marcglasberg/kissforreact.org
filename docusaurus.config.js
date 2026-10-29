@@ -9,7 +9,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Kiss State Management for React',
-  tagline: 'Less Complexity, More Power',
+  tagline: 'React state management, built for AI coding agents',
   favicon: 'img/favicon.ico',
 
   url: 'https://kissforreact.org',
@@ -88,17 +88,17 @@ const config = {
       metadata: [
         {
           name: 'description',
-          content: 'State management for React. Simple to learn and easy to use; Powerful enough to handle complex applications with millions of users; Testable.'
+          content: 'React state management, built for AI coding agents. Your agent writes structured, testable code, and a linter checks its work. You can still read every line.'
         },
         {name: 'og:title', content: 'Kiss'},
-        {name: 'og:description', content: 'by Marcelo Glasberg'},
+        {name: 'og:description', content: 'React state management, built for AI coding agents. Your agent writes structured, testable code, and a linter checks its work. You can still read every line.'},
         {name: 'og:url', content: 'https://kissforreact.org'},
         {name: 'og:image', content: 'https://kissforreact.org/img/LandscapeLake.jpg'},
         {name: 'twitter:card', content: 'summary_large_image'},
         {name: 'twitter:title', content: 'Kiss'},
         {
           name: 'twitter:description',
-          content: 'React state management that is simple to learn and easy to use; Handles complex applications with millions of users; Testable.'
+          content: 'React state management, built for AI coding agents. Your agent writes structured, testable code, and a linter checks its work. You can still read every line.'
         },
         {name: 'twitter:image', content: 'https://kissforreact.org/img/LandscapeLake.jpg'},
       ],

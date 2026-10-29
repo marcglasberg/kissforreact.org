@@ -5,8 +5,8 @@ sidebar_position: 1
 # Comparing with Redux Toolkit
 
 This page is for people who know Redux Toolkit. It shows how to get the same results with
-Kiss, with less code. Each section shows the Redux Toolkit code first, and then the Kiss code
-that does the same.
+Kiss, with less code, and what changes when an AI agent writes the code. Each section shows
+the Redux Toolkit code first, and then the Kiss code that does the same.
 
 Kiss and Redux want the same things:
 
@@ -17,8 +17,10 @@ Kiss and Redux want the same things:
 
 Redux Toolkit was created to make Redux easier to write. It helps, but a lot of wiring is
 still there: slices, action creators, string action types, thunks, middleware, and extra
-reducers for every step of an async process. Kiss keeps the ideas of Redux and drops the
-wiring. An action is a class. Its reducer is a method of that class. That's all.
+reducers for every step of an async process. And Redux leaves the async part open: thunks,
+listener middleware, sagas and RTK Query are all common, so two projects, or two agent
+sessions, rarely do it the same way. Kiss keeps the ideas of Redux and drops the wiring. An
+action is a class. Its reducer is a method of that class. That's all.
 
 ## Quick translation
 
@@ -453,6 +455,35 @@ Less code is nice, but the real gain is where the decisions live:
 * **Tests without UI.** All the business logic is in actions, so all of it can be tested by
   dispatching to a store.
 
+## When an AI agent writes the code
+
+When your agent writes the code and you review it, this is what changes:
+
+* **What it knows carries over.** Agents have seen more Redux than almost any other state
+  library. Kiss keeps the same ideas: one store, actions, reducers, `dispatch`, and selectors.
+  Your agent starts from a model it already knows. Only the wiring is new.
+* **One way to do async.** With Redux, your agent picks thunks, listener middleware, sagas, or
+  RTK Query, and may pick another one in the next session. With Kiss, async work is always an
+  action with `async reduce()`, so the code of each session looks the same.
+* **Less to write, and less to review.** Compare the "load a user" example in
+  [Async processes](#async-processes). The Kiss version is less than half as long. It has no
+  `status` field and no `rejected` case, so there is nothing there for your agent to forget,
+  or for you to check.
+* **Checks it can run itself.** Your agent can test an action with `dispatchAndWait`, with no
+  rendering and no mock store, and run the test on its own. With the
+  [Kiss ESLint plugin](../getting-started/intro.md#linter), it also runs `npx eslint` to find
+  mistakes that compile fine, like a reducer that uses an old copy of the state after an
+  `await`, and fixes them before you see the code.
+* **Where Redux is ahead.** Your agent has seen far more Redux than Kiss. Redux also has the
+  Redux DevTools, and a large ecosystem of middleware and add-ons. Kiss makes up for the
+  training data with the [single-file docs](../getting-started/intro.md#docs), the linter, and
+  the code already in your project, which shows your agent the pattern to follow. It has no
+  devtools panel, but it has the observers shown in [Logging](#logging), and your agent can
+  read their output. See also
+  [Claude's own take](../getting-started/claude-opinion-kiss.md#redux-toolkit).
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+Redux slices with Kiss.

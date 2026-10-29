@@ -128,8 +128,9 @@ Note again that all functions above return new `TodoList` objects,
 instead of modifying the current one.
 This means `TodoList` is **immutable**.
 
-Also note that all these functions are easy to create, and it would also be easy to create unit
-tests for them.
+Each of these is a small, pure function: it takes a list and returns a new one. That's easy for
+an agent to get right, and to unit test, without a store or a component. It's also where the
+business rules live, so changing a rule is a small diff in one place.
 
 Adding these functions to the `TodoList` class will allow us to manage the immutable list of
 todos in a clean and efficient way, without resorting to external "immutable state libraries"

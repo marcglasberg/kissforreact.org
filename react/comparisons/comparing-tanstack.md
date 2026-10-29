@@ -5,9 +5,10 @@ sidebar_position: 2
 # Comparing with TanStack Query
 
 This page is for people who know TanStack Query (also called React Query). It shows how to get
-the same results with Kiss, which does things in a different way. Each section shows the
-TanStack Query code first, and then the Kiss code that does the same. If you use SWR, most of
-this page applies to it too, and the [SWR](#swr) section at the end translates its options.
+the same results with Kiss, which does things in a different way, and what changes when an AI
+agent writes the code. Each section shows the TanStack Query code first, and then the Kiss code
+that does the same. If you use SWR, most of this page applies to it too, and the [SWR](#swr)
+section at the end translates its options.
 
 TanStack Query is an asynchronous state management package based on **queries** and a **cache**.
 A query fetches data from a server (with [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API),
@@ -45,7 +46,8 @@ Three things follow from this, and they come up in every section below:
 * **The loading rules are on the action, not in the component.** In TanStack Query, "for how
   long is this data fresh", "retry how many times", and "poll every 10 seconds" are options on
   a hook, inside a component. Five components can use the same query with five different
-  answers. In Kiss, those rules are declared once, on the action, and every component gets the
+  answers. That's easy to end up with when an agent writes each component in a different
+  session. In Kiss, those rules are declared once, on the action, and every component gets the
   same answer.
 
 * **Refreshing re-runs the action, not just the fetch.** TanStack Query fetches raw data and
@@ -1299,6 +1301,34 @@ the decisions live:
 * **It stays simple when the app grows.** An app that only shows server data is easy either
   way. When the app gets client logic, Kiss has a place for it, and TanStack Query doesn't.
 
+## When an AI agent writes the code
+
+When your agent writes the code and you review it, this is what changes:
+
+* **The rules live in one place.** In TanStack Query, `staleTime`, `retry`, and
+  `refetchInterval` are repeated in each `useQuery` call. Your agent writes each call on its
+  own, so the same data can get different rules in different components, or in different
+  sessions. In Kiss, `fresh`, `retry`, and `pollInterval` are declared once, on the action. To
+  check them, you read one class, not every component that uses the data.
+* **Client state has a home too.** With TanStack Query, your agent still has to decide where
+  client state goes: `useState`, a context, or a second library. It may decide differently each
+  time. In Kiss, client state goes in the same `State` class as the server data, so there is
+  nothing to decide.
+* **Checks it can run itself.** The logic is in actions, not in components, so your agent tests
+  it with `dispatchAndWait`, with no rendering and no `QueryClientProvider` (see
+  [Testing](#testing)), and runs the test on its own. With the
+  [Kiss ESLint plugin](../getting-started/intro.md#linter), it also runs `npx eslint` to find
+  mistakes that compile fine, like `retry` on an action whose `reduce` is sync, and fixes them
+  before you see the code.
+* **Where TanStack Query is ahead.** It has an official ESLint plugin
+  (`@tanstack/eslint-plugin-query`), and a devtools panel. It's also very widely used, so your
+  agent has seen far more of it than of Kiss, and writes it fluently. Kiss makes up for the
+  training data with the [single-file docs](../getting-started/intro.md#docs), its own linter,
+  and the code already in your project, which shows your agent the pattern to follow. See also
+  [Claude's own take](../getting-started/claude-opinion-kiss.md#react-query-tanstack-query).
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+queries with Kiss.

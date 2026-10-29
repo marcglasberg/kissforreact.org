@@ -5,8 +5,8 @@ sidebar_position: 3
 # Comparing with Zustand
 
 This page is for people who know Zustand. It shows how to get the same results with Kiss,
-which does things in a different way. Each section shows the Zustand code first, and then the
-Kiss code that does the same.
+which does things in a different way, and what changes when an AI agent writes the code. Each
+section shows the Zustand code first, and then the Kiss code that does the same.
 
 Zustand is based on **stores**. You call `create` with a function that returns an object. Some
 fields of that object are the state, and the others are the functions that change it, by
@@ -26,10 +26,10 @@ that changes it lives. Every time Zustand "calls `set` inside a store function",
 
 Zustand is a box. It holds state and functions, and it has no opinion about what goes in the
 box, or about what the functions may do. That is what makes it small, and it's what people
-like about it. It's also what it leaves for you to decide, for every feature, and for every
-developer on the team: where does the code that calls the server go? Where do the loading
-flags go? What happens when the call fails? What if the user clicks twice? Where do timers and
-listeners live? How do tests get a clean store?
+like about it. It's also what it leaves for you to decide, for every feature, for every
+developer on the team, and for every session of an AI agent: where does the code that calls
+the server go? Where do the loading flags go? What happens when the call fails? What if the
+user clicks twice? Where do timers and listeners live? How do tests get a clean store?
 
 Kiss answers these questions once. The state is one class. A change is an action, with a
 name. An async change is an action with `async` in front of its reducer. Loading and failure
@@ -1086,6 +1086,38 @@ because the library decided nothing, so every file decides for itself:
   fit. In Kiss, they go in the store props, the dependencies, and the actions, and
   `store.dispose()` closes all of it.
 
+## When an AI agent writes the code
+
+Zustand leaves most decisions to whoever writes the code. When that is an AI agent, it makes
+them again in each session, and you review the result:
+
+* **One shape for every feature.** Zustand allows many ways to do the same thing: one store or
+  many, slices, `set` inside the store or `setState` from outside, and loading flags named by
+  each function. Your agent picks one in each session, and not always the same one. In Kiss,
+  there is one way: a field in the `State` class, and an action that changes it. The tenth
+  feature looks like the first, so it's easier to review.
+* **Less to write by hand.** The "don't run twice" check, the "still fresh" check, and the
+  retry loop in [Retry, debounce, fresh data, and more](#retry-debounce-fresh-data-and-more)
+  are code your agent writes again for each function, along with the loading flags and the
+  `try`/`catch` that clears them. Each one can be wrong. In Kiss, they are properties on the
+  action, like `nonReentrant`, `fresh` and `retry`, and the store tracks the loading state. In
+  review, each one is a single line.
+* **Checks it can run.** A Kiss test creates a store, calls `dispatchAndWait`, and checks the
+  state, as in [Testing](#testing). There is no `vi.mock('zustand')`, no store reset after each
+  test, and nothing to render, so your agent can write the test and run it as part of its
+  work. And `npx eslint`, with the [Kiss ESLint plugin](../getting-started/intro.md#linter),
+  reports the mistakes that compile but fail at runtime, like a state changed in place, or an
+  `expect` that doesn't wait for the action. The agent reads the errors and fixes them.
+* **Where Zustand is ahead.** Zustand's API is small, and agents have seen far more Zustand
+  code than Kiss code, so they write it well without help. For a small app, it's also less
+  code. Kiss makes up for this in three ways. The
+  [single-file docs](../getting-started/intro.md#docs) give your agent the whole API. The
+  linter catches what it gets wrong. And once the project has some Kiss code, that code shows
+  the agent the pattern to follow. See also
+  [Claude's own take](../getting-started/claude-opinion-kiss.md#zustand).
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+Zustand stores with Kiss.

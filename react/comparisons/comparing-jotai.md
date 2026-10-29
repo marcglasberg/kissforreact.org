@@ -5,8 +5,8 @@ sidebar_position: 6
 # Comparing with Jotai
 
 This page is for people who know Jotai. It shows how to get the same results with Kiss, which
-does things in a different way. Each section shows the Jotai code first, and then the Kiss code
-that does the same.
+does things in a different way, and what changes when an AI agent writes the code. Each section
+shows the Jotai code first, and then the Kiss code that does the same.
 
 Jotai is based on **atoms**. An atom is a small piece of state, like `useState`, but shared. You
 create atoms where you need them, and build bigger state from smaller atoms: a derived atom reads
@@ -190,10 +190,10 @@ const { todos, filter } = useObject((state: State) => ({ todos: state.todos, fil
 ```
 
 One thing to watch in Jotai: an atom is known by its identity, so an atom created during the
-render is a new atom every time, and `useAtom(atom(0))` loops forever. Atoms must be created
-outside the component, or kept with `useMemo`. Kiss selectors are plain functions of the state,
-so there is nothing to keep stable. See
-[Components use the state](../basics/components-use-the-state).
+render is a new atom every time, and `useAtom(atom(0))` loops forever. It compiles, so it's an
+easy mistake for an agent to make. Atoms must be created outside the component, or kept with
+`useMemo`. Kiss selectors are plain functions of the state, so there is nothing to keep stable.
+See [Components use the state](../basics/components-use-the-state).
 
 ## Changing the state
 
@@ -830,6 +830,35 @@ the library decided nothing about it:
   and the API is imported. In Kiss, they go in the store props, the actions, and the
   dependencies, and `store.dispose()` closes all of it.
 
+## When an AI agent writes the code
+
+When your agent writes the code and you review it, this is what changes:
+
+* **One door, in every session.** In Jotai, your agent can set an atom directly, or write a
+  write atom, as in [Changing the state](#changing-the-state). Both work, so one session does it
+  one way, and the next session does it the other way. In Kiss, every change is an action, so
+  each session writes the same kind of code, and you review it the same way.
+* **Atom identity is hard to see.** An atom is known by its identity, not by its name. A line
+  that creates an atom looks the same inside a component and outside it, so a diff of a few
+  lines doesn't show the problem. Inside a component, it's a new atom on every render, and that
+  only shows at runtime. A Kiss selector is a plain function of the state, with nothing to keep
+  stable.
+* **Flags by hand, or one hook.** For each async write, your agent writes the "saving" and
+  "error" atoms, and the `try`, `catch` and `finally`, as in [Saving data](#saving-data). If it
+  forgets the `finally`, or shares one flag between two writes, nothing fails until a user
+  sees it. In Kiss, your agent writes `useIsWaiting(SaveTodo)`, and the store keeps the status.
+* **Checks your agent can run.** The Jotai docs recommend testing through the components. In
+  Kiss, your agent tests an action with `dispatchAndWait`, with no rendering, and no module to
+  mock. It also runs `npx eslint` with the Kiss ESLint plugin, which finds mistakes that compile
+  fine, like a dispatch while the component renders (`dispatch-in-render`).
+* **Where Jotai is ahead.** Jotai is small, a component reads an atom with no selector, async
+  atoms work with Suspense, and `jotai-devtools` shows every atom in a panel. Kiss has no panel
+  like it. Also, agents have seen much more Jotai code than Kiss code. Kiss makes up for this
+  with the single-file docs, the linter, and the code already in your project, which shows your
+  agent the pattern.
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite the atoms of
+one feature with Kiss.

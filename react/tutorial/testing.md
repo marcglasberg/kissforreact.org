@@ -4,10 +4,12 @@ sidebar_position: 10
 
 # Testing
 
-How would we go about testing our _Todo List_ app?
+Tests are how your agent checks its own work, and how you check what it did.
 
-It's straightforward: let's dispatch some actions, wait for them to finish,
-and then verify if the new state is as expected, or check if some error was thrown.
+A Kiss test doesn't render anything. It creates a store, dispatches some actions, waits for
+them to finish, and then checks the new state, or the error that was thrown. The agent can
+write and run these tests without a browser, and you can read them as a short spec of what
+the app does.
 
 We have the following actions in our app:
 
@@ -41,7 +43,8 @@ test('AddTodoAction', async () => {
 });
 ```
 
-Easy, right? We create a new store, dispatch the action, and check the new state.
+That's the whole pattern: create a store, dispatch, and check the new state. Every test on this
+page has this shape.
 The `dispatchAndWait` method waits for the action to finish dispatching,
 and returns the action `status`, which contains detailed information about the dispatch,
 including any errors thrown.
@@ -195,14 +198,16 @@ The above code is just an example, and it's not the recommended way to mock func
 You should feel free to use any mocking features of your test framework,
 or any mocking library you prefer.
 
-And remember you can also use the real API calls, turning your tests into easy-to-write
-integration tests.
+You can also use the real API calls, to write integration tests. But by default, use mocks or
+fakes, so that tests don't depend on the network. A test that fails at random breaks the loop
+where your agent runs the tests, reads the failures, and fixes its code.
 
 ## Try it yourself
 
-Now, try to implement the tests for the remaining synchronous actions:
+Ask your agent:
 
-* `RemoveCompletedTodosAction`
-* `AddRandomTodoAction`
-* `ToggleTodoAction`
-* `NextFilterAction`
+> *"Write Kiss tests for `RemoveCompletedTodosAction`, `ToggleTodoAction` and
+> `NextFilterAction`."*
+
+Then read the tests it writes. Each one should be a few lines: create a store, dispatch, and
+check the state.

@@ -5,9 +5,9 @@ sidebar_position: 4
 # Comparing with MobX
 
 This page is for people who know MobX. It shows how to get the same results with Kiss, which
-does things in a different way. Each section shows the MobX code first, and then the Kiss code
-that does the same. If you use Valtio, most of this page applies to it too, and the
-[Valtio](#valtio) section at the end translates it.
+does things in a different way, and what changes when an AI agent writes the code. Each section
+shows the MobX code first, and then the Kiss code that does the same. If you use Valtio, most of
+this page applies to it too, and the [Valtio](#valtio) section at the end translates it.
 
 MobX is based on **observable** state. You put your state in class fields, mark them as
 observable, and change them by assigning to them. MobX watches which fields each component
@@ -42,8 +42,10 @@ Three things follow from this, and they come up in every section below:
 
 * **Mistakes are loud, not silent.** The common MobX mistakes, like forgetting `observer`,
   destructuring an observable, or assigning after an `await`, don't throw. The screen just
-  stays stale. In Kiss, those mistakes can't be made, because there is nothing to track and
-  nothing to mutate.
+  stays stale, and there's no error for you, or for an AI agent, to read and fix.
+  (`eslint-plugin-mobx` catches some of them, like a missing `observer`.) In Kiss, those
+  mistakes can't be made, because there is nothing to track and nothing to mutate. And the
+  Kiss mistakes that compile but fail at runtime are reported by its ESLint plugin.
 
 * **The state stays simple as the app grows.** MobX is easy with flat stores. With deep
   nesting, serialization, snapshots, and undo, people reach for MobX-State-Tree or MobX
@@ -1024,6 +1026,37 @@ shows up later:
 * **It gets complex when the app does.** Nested data, serialization, and undo push MobX apps
   toward MobX-State-Tree or Keystone. Kiss stays the same from the first screen to the last.
 
+## When an AI agent writes the code
+
+MobX is pleasant for a human who knows its rules. When an AI agent writes the code, and you
+review it, other things count more:
+
+* **Errors it can read.** An agent finds its mistakes by running something and reading the
+  error. The MobX mistakes in [Components](#components) give no error, and unless the agent
+  opens the app and looks, it doesn't know the screen is stale. In Kiss, a test dispatches the
+  action with `dispatchAndWait` and compares whole states, with nothing rendered, so a wrong
+  change is a failed test. And `npx eslint`, with the
+  [Kiss ESLint plugin](../getting-started/intro.md#linter), reports the Kiss mistakes that
+  compile but fail at runtime, like a state changed in place. Your agent runs both, reads the
+  errors, and fixes them.
+* **Dependencies written in the code.** In MobX, what a component depends on is what it read
+  during its last render. To review a change, you must work that out in your head. In Kiss, it's
+  the selector given to `useSelect`, and it's in the diff you review.
+* **One way to write it.** MobX code can use decorators, `makeObservable`,
+  `makeAutoObservable`, or `observable()`, and after an `await`, `runInAction` or `flow`.
+  Agents have seen all of them, and may pick a different one in each session, or mix them in
+  one project. Kiss has one way: a `State` class, and actions. An async action is
+  `async reduce()`, with a plain `await`.
+* **Where MobX is ahead.** Simple MobX code is shorter: you assign to a field, and the screen
+  updates. `computed` is a good idea, written once. And MobX has a mature ecosystem, with
+  devtools, `eslint-plugin-mobx`, and years of examples that agents have learned from. Kiss
+  makes up for this with the [single-file docs](../getting-started/intro.md#docs), which give
+  your agent the whole API, with the linter, and with the code already in the project, which
+  shows the agent the pattern for the next feature. See also
+  [Claude's own take](../getting-started/claude-opinion-kiss.md#mobx).
+
 ---
 
-Give it a try and [follow the tutorial](../tutorial/setting-up-the-store).
+Give it a try: [follow the tutorial](../tutorial/setting-up-the-store), or
+[give your agent the docs](../getting-started/intro.md#docs) and ask it to rewrite one of your
+MobX stores with Kiss.

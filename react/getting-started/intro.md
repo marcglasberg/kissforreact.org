@@ -87,5 +87,5 @@ explains how to install it yourself, and has the full list of rules.
 
 ## Next steps
 
-Next, let's follow a short tutorial to see how easy it is to use Kiss.
-We'll create a simple _Todo List_ app.
+Next, a short tutorial builds a simple _Todo List_ app with Kiss. It's the kind of code your
+agent writes, so you know what to expect when you review it.

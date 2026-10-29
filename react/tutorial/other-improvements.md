@@ -4,7 +4,7 @@ sidebar_position: 7
 
 # Other improvements
 
-Let's implement some other improvements to our todo list application:
+Here's a set of changes you might ask your agent for, in one request:
 
 * Add a checkbox to mark a todo item as completed
 * Add a filter to show only the completed items, only the uncompleted items, or all items
@@ -74,7 +74,8 @@ We will:
 Click the "Add Random Todo" a few times, to add some items to the list. Then, mark some of
 them as completed, and click the "Showing all" button to see how the filter works.
 
-Read the code below and try to understand how it works.
+Read the code below as you'd review your agent's change. Each feature touches one action, one
+component, and maybe one method of a state class, so the diff stays small.
 
 <iframe
 src="https://codesandbox.io/embed/qs35kc?view=split&module=%2Fsrc%2FApp.tsx&hidenavigation=1&fontsize=12.5&editorsize=50&previewwindow=browser&hidedevtools=1&hidenavigation=1"
