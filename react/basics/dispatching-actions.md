@@ -124,7 +124,9 @@ expect(sellAction.status.isCompletedOk).toBe(true);
 Using `dispatchSync` is exactly the same as using the regular `dispatch`,
 except for the fact it will throw a `StoreException` if the action is **asynchronous**.
 
-Note an action is async if any of its `reduce()` or `before()` methods return a `Promise`.
+Note an action is async if any of its `reduce()` or `before()` methods return a `Promise`,
+or if it uses [`checkInternet`](../advanced-actions/internet-features#checkinternet),
+since the internet check is async.
 
 The only use for `dispatchSync` is when you need to guarantee (in runtime) that your
 action is **sync**, which means the state gets changed right after the dispatch call.

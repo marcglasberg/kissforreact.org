@@ -125,34 +125,40 @@ The same check is also used by [unlimitedRetryCheckInternet](#unlimitedretrychec
 
 ### Customizing the error
 
-The internet check runs in the default `before()` method of the action.
-To show a different error, override `before()`, call `super.before()`,
-and throw your own `UserException` if it fails:
+To show a different error, override the `noInternetException()` method of the action,
+and return your own `UserException`:
 
 ```tsx
 class LoadPrices extends Action {
 
   checkInternet = { dialog: true }
 
-  async before() {
-    try {
-      await super.before();
-    } catch (error) {
-      throw new UserException('You are offline. The prices could not be loaded.');
-    }
+  noInternetException() {
+    return new UserException('You are offline. The prices could not be loaded.');
   }
 
   async reduce() { ... }
 }
 ```
 
-In the same way, if you override `before()` for any other reason, you must call
-`super.before()` (and await it), or the internet won't be checked.
+Kiss calls `noInternetException()` only when there is no internet. The `dialog` option of
+`checkInternet` still decides if your exception opens a dialog. With
+`checkInternet = { abort: true }`, it's not called, since the action is aborted silently.
+
+### Overriding before()
+
+Kiss checks the internet before it calls the action's
+[`before()`](./before-and-after-the-reducer#before) method.
+So you can override `before()`, and you don't need to call `super.before()`.
+If there is no internet, `before()` and `reduce()` don't run, but `after()` still runs.
+
+Note `checkInternet` makes the action async, even if its `before()` and `reduce()` are sync,
+because the internet check is async. So you can't dispatch it with `dispatchSync()`.
 
 ### Combining with other features
 
-* `checkInternet` can be combined with [retry](./control-features#retry). But since `before()`
-  is not retried, the internet is only checked once. So `retry` plus `checkInternet` doesn't
+* `checkInternet` can be combined with [retry](./control-features#retry). But since only
+  `reduce()` is retried, the internet is only checked once. So `retry` plus `checkInternet` doesn't
   retry when there is no internet. It only retries if there IS internet, but the action fails
   for some other reason. To retry until there is internet, use
   [unlimitedRetryCheckInternet](#unlimitedretrycheckinternet) instead.

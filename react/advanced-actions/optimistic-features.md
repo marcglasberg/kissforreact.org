@@ -101,8 +101,8 @@ Writing this by hand for every action is tedious and easy to get wrong.
 
 ### How to use it
 
-Extend `OptimisticCommand` instead of your base action, and **don't** write a `reduce()` method.
-Instead, provide these methods:
+Extend `OptimisticCommand` instead of your base action, and **don't** write a `reduce()` method
+(if you do, the dispatch throws a `StoreException`). Instead, provide these methods:
 
 | Method                            | Description                                                      |
 |-----------------------------------|------------------------------------------------------------------|
@@ -436,8 +436,8 @@ a follow-up Request 2 would automatically be sent with `false`.
 
 ### How to use it
 
-Extend `OptimisticSync` instead of your base action, and **don't** write a `reduce()` method.
-Instead, provide these methods:
+Extend `OptimisticSync` instead of your base action, and **don't** write a `reduce()` method
+(if you do, the dispatch throws a `StoreException`). Instead, provide these methods:
 
 | Method                                        | Description                                                 |
 |-----------------------------------------------|-------------------------------------------------------------|
