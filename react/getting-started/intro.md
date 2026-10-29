@@ -2,6 +2,9 @@
 sidebar_position: 1
 sidebar_label: Install and set up
 slug: /intro
+pagination_next_link:
+  title: Tutorial
+  permalink: /react/category/tutorial
 ---
 
 import Tabs from '@theme/Tabs';
@@ -19,8 +22,8 @@ Kiss (Keep It Simple State) is a state management package for React, built for A
 
 Two AI coding agents explain, in their own words, what they think of Kiss:
 
-* [Claude's opinion about Kiss](./claude-opinion-kiss.md)
-* [Codex's opinion about Kiss](./codex-opinion-kiss.md)
+* <img src="/img/claude.svg" alt="Claude" width="20" height="20" style={{verticalAlign: 'middle', marginRight: '0.4rem'}} />[Claude's opinion about Kiss](./claude-opinion-kiss.md)
+* <img src="/img/openai.svg" alt="OpenAI" width="20" height="20" className="invert-in-dark" style={{verticalAlign: 'middle', marginRight: '0.4rem'}} />[Codex's opinion about Kiss](./codex-opinion-kiss.md)
 
 Created by [Marcelo Glasberg](https://github.com/marcglasberg).
 
