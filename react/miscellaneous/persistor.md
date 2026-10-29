@@ -206,7 +206,7 @@ Kiss will call these functions at the right time, so you don't need to worry abo
 * From this moment on, every time the state changes, Kiss will schedule a call to
   the `persistDifference()` function. This function will not be called more than once each 2
   seconds, which is the default throttle interval. You can change it by overriding the `throttle`
-  property (make it zero if you want no throttle, and the state will save as soon as it changes).
+  property (return `null` or zero if you want no throttle, and the state will save as soon as it changes).
 
 * In the unlikely case the `persistDifference()` function itself takes more than 2 seconds to
   execute, the next call will be scheduled only after the current one finishes.

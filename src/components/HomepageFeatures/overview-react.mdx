@@ -1006,7 +1006,7 @@ With `null`, Kiss doesn't even build the log messages:
 const store = createStore<State>({
   initialState: new State(),
   logger: (obj) => myLogger.info(obj), // Or `null` to turn logging off.
-  logStateChanges: true, // Also log every state change.
+  logStateChanges: false, // Don't log every state change (it's on by default).
 });
 ```
 

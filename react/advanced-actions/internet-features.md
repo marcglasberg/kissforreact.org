@@ -94,9 +94,13 @@ import NetInfo from '@react-native-community/netinfo';
 
 const store = createStore<State>({
   initialState: State.initialState,
-  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected === true)),
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)),
 });
 ```
+
+Note `isConnected` is `null` while NetInfo doesn't know yet. The `!== false` counts that as online,
+so the action still tries. That's safer: a wrong "online" only costs a request that fails, while a
+wrong "offline" would block a request that could have worked.
 
 The source is started when the signal is first read (for example, by the first action with
 `checkInternet`), and stopped by `store.dispose()`. A server store (created with `server: true`,
@@ -112,7 +116,7 @@ pinging your own server). The override then ignores `store.isOnline`:
 export abstract class Action extends KissAction<State> {
 
    protected hasInternet(): Promise<boolean> {
-      return NetInfo.fetch().then(state => state.isConnected ?? true);
+      return NetInfo.fetch().then(state => state.isConnected !== false);
    }
 }
 ```

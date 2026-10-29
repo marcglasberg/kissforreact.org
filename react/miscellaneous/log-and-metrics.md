@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Log and Metrics
 
-When you create your store, you can optionally pass it an `actionObservers` and
+When you create your store, you can optionally pass it an `actionObserver` and
 a `stateObserver`, which may be used for logging and collecting metrics for your app:
 
 ```tsx

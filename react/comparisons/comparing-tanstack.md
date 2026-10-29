@@ -586,7 +586,7 @@ import { focusManager, onlineManager } from '@tanstack/react-query';
 
 onlineManager.isOnline();
 onlineManager.setEventListener((setOnline) =>
-  NetInfo.addEventListener((s) => setOnline(s.isConnected === true)));
+  NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)));
 ```
 
 Kiss has `store.isFocused` and `store.isOnline`. In the browser, they follow
@@ -606,7 +606,7 @@ the features that depend on them (`onFocus`, `onOnline`, polling, `checkInternet
 ```tsx
 const store = createStore<State>({
   initialState: State.initialState,
-  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected === true)),
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)),
 });
 ```
 

@@ -97,7 +97,7 @@ async checkInternetConnection() {
 ```ts
 async checkInternetConnection() {
   const state = await NetInfo.fetch();
-  if (!state.isConnected) {
+  if (state.isConnected === false) {
     throw new NoInternetConnectionError();
   }
 }

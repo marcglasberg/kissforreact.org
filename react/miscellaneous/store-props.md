@@ -191,7 +191,7 @@ It does the following, in order:
 2. Cancels the `dispatchWhen`s that are still waiting, so their actions are not dispatched, and
    their `onTimeout` is not called.
 3. Pauses the persistor, and cancels its pending save. A save that is already running still
-   finishes. If you want the current state saved first, call `await store.persistAndPause()`
+   finishes. If you want the current state saved first, call `await store.persistAndPausePersistor()`
    before.
 4. Disposes all the props, and removes them.
 

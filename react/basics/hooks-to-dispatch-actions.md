@@ -213,7 +213,7 @@ const store = createStore<State>({
     const sub = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
     return () => sub.remove();
   },
-  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected === true)),
+  onlineSource: (setOnline) => NetInfo.addEventListener((s) => setOnline(s.isConnected !== false)),
 });
 ```
 
