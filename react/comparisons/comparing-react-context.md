@@ -1,5 +1,6 @@
 ---
 sidebar_position: 7
+sidebar_label: Comparing with React Context
 ---
 
 # Comparing with React Context and useReducer
