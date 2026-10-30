@@ -48,6 +48,8 @@ Each aborted action finishes silently:
 
 If no action of the type is in progress, `store.abort` does nothing.
 
+To abort the actions of several types, pass an array: `store.abort([LoadUser, LoadPosts])`.
+
 ### Requests that don't use the signal
 
 Pass `this.abortSignal` to `fetch`, or to any other API that accepts an `AbortSignal` (like
@@ -75,6 +77,9 @@ Pass `{ statusKey }` to abort only the actions with that [statusKey](../basics/w
 store.abort(LoadUser, { statusKey: userId });
 ```
 
+With an array of types, the key applies to all of them:
+`store.abort([LoadUser, LoadPosts], { statusKey: userId })`.
+
 ### Aborting when a component unmounts
 
 In [useStoreEffect](../basics/hooks-to-dispatch-actions#dispatching-when-the-component-mounts), abort in `onUnmount`
@@ -85,6 +90,15 @@ the request is cancelled, and its result doesn't land in the state later:
 useStoreEffect({
   onMount: (store) => store.dispatch(new LoadUser(userId)),
   onUnmount: (store) => store.abort(LoadUser),
+});
+```
+
+If `onMount` dispatches several actions, abort all of them with an array:
+
+```tsx
+useStoreEffect({
+  onMount: (store) => store.dispatchAll([new LoadUser(userId), new LoadPosts(userId)]),
+  onUnmount: (store) => store.abort([LoadUser, LoadPosts]),
 });
 ```
 

@@ -24,6 +24,9 @@ Thankfully, this is very easy to do with Kiss, by using the following functions:
 * `exceptionFor(actionType)`: Returns the `UserException` that caused the action to fail.
 * `clearExceptionFor(actionType)`: Clears the failed state of the action.
 
+Each of them also accepts an array of action types, like `isWaiting([LoadUser, LoadPosts])`,
+to ask about several types at once. See [several action types](#several-action-types).
+
 Note `isFailed` is true for any error, but `exceptionFor` only returns `UserException`s.
 If the action fails with some other error, `isFailed` is true, but `exceptionFor` returns `null`.
 If you want an error message for those errors too, your action can turn them into
@@ -245,6 +248,38 @@ You could always clear the error message explicitly by defining
 `let clearExceptionFor = useClearExceptionFor();` and then calling `clearExceptionFor(LoadText)`,
 but it's not necessary to do so before dispatching the action again.
 
+## Several action types
+
+A screen often loads more than one thing. To show one spinner while any of them runs, and
+one error message if any of them fails, pass an array of action types:
+
+```tsx
+function ProfileScreen() {
+
+  const isWaiting = useIsWaiting([LoadUser, LoadPosts]);
+  const isFailed = useIsFailed([LoadUser, LoadPosts]);
+  const exception = useExceptionFor([LoadUser, LoadPosts]);
+  const user = useSelect((state: State) => state.user);
+  const posts = useSelect((state: State) => state.posts);
+
+  if (isWaiting) return <CircularProgress />;
+  if (isFailed) return <p>{exception?.message ?? 'Loading failed.'}</p>;
+  return <Profile user={user} posts={posts} />;
+}
+```
+
+With an array:
+
+* `isWaiting` is true while an action of **any** of the types runs.
+* `isFailed` is true if **any** of the types failed.
+* `exceptionFor` returns the `UserException` of the first type in the array that has one.
+  So put first the type whose message matters most.
+* `clearExceptionFor([LoadUser, LoadPosts])` clears the failures of all the types.
+
+Don't write `useIsWaiting(LoadUser) || useIsWaiting(LoadPosts)`. When the first hook returns
+true, the second hook is not called, and that breaks React's rules of hooks. Use the array,
+or call each hook in its own line.
+
 ## Status per key
 
 The functions above work per action class. `useIsWaiting(LoadUser)` is true while **any**
@@ -290,6 +325,9 @@ The same option works in `store.isWaiting`, `store.isFailed`, `store.exceptionFo
 `store.clearExceptionFor`, in their `this.` versions inside actions, and in the function
 returned by `useClearExceptionFor`. Without the option, they consider all actions of the
 type, whatever their keys, as before.
+
+With an [array of action types](#several-action-types), the key applies to all the types:
+`useIsWaiting([LoadUser, LoadPosts], { statusKey: userId })`.
 
 The key can be a string, a number, an array like `[userId, cartId]`, or a plain object.
 Arrays and plain objects are compared by content.
@@ -359,6 +397,11 @@ This is what happens:
 
 Without `statusKey`, `useSuspense(LoadUser)` suspends while **any** `LoadUser` runs (or any
 action of a subclass, like `useIsWaiting`), and throws the most recent failure of the type.
+
+When the component needs the result of several actions, pass an array:
+`useSuspense([LoadUser, LoadPosts])`. The component suspends while an action of **any** of the
+types runs, and renders again when none of them runs. Then, if any of them failed, it throws
+the error of the first type in the array that failed.
 
 On the server, and while hydrating, `useSuspense` never suspends or throws, like the other
 status hooks (see [server-side rendering](../miscellaneous/server-side-rendering)). After

@@ -296,6 +296,9 @@ function UserRow({ userId }: { userId: string }) {
 }
 ```
 
+To ask about several action types at once, pass an array:
+`useIsWaiting([LoadUser, LoadPosts])` is true while any of them runs.
+
 ## Suspense and error boundaries
 
 If you prefer React's `<Suspense>` and error boundaries to `isWaiting`/`isFailed` checks,

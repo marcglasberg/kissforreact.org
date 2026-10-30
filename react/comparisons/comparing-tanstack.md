@@ -112,7 +112,7 @@ explain each line, with code.
 | `useInfiniteQuery`, `fetchNextPage`, `hasNextPage`                  | `LoadPages`, dispatched with `'next'`, and the `Pages` value in the state                    |
 | `invalidateQueries`                                                 | Not needed: the action that saves reloads what it needs                                      |
 | `setQueryData`                                                      | A sync action                                                                                |
-| `useIsFetching`, `useIsMutating`                                    | One `useIsWaiting` per action, then `\|\|`; or `store.actionsInProgress()`                   |
+| `useIsFetching`, `useIsMutating`                                    | `useIsWaiting([LoadUser, LoadPosts])`, or `store.actionsInProgress()`                        |
 | `dehydrate`, `hydrate`, `HydrationBoundary`                         | `serverState`, `StoreSlice`                                                                  |
 | `persistQueryClient`                                                | The persistor                                                                                |
 | `QueryClient.clear()`, `removeQueries`                              | `store.logOut()`, `store.clearInternalActionProps()`, a reset action                         |
@@ -669,6 +669,10 @@ In Kiss, use `dispatchAll`, or `dispatchAndWaitAll` to wait for all of them:
 await store.dispatchAndWaitAll([new LoadUser(id), new LoadPosts(id)]);
 ```
 
+To show one spinner while any of them runs, pass an array to the hook:
+`useIsWaiting([LoadUser, LoadPosts])`. The same works in `useIsFailed`, `useExceptionFor` and
+`useSuspense`.
+
 ## Infinite queries
 
 TanStack Query loads a list page by page with `useInfiniteQuery`. You give it the first page
@@ -801,6 +805,7 @@ when the component unmounts:
 ```tsx
 store.abort(LoadPage);                        // All the LoadPage actions in progress.
 store.abort(LoadPage, { statusKey: page });   // Only the ones with this statusKey.
+store.abort([LoadPage, LoadUser]);            // The actions of several classes.
 
 useStoreEffect({ onUnmount: (store) => store.abort(LoadPage) });
 ```
@@ -1077,10 +1082,7 @@ const isFetching = useIsFetching();
 In Kiss, list the actions the bar should show:
 
 ```tsx
-// One hook per line. Writing `useIsWaiting(A) || useIsWaiting(B)` would break the rules of hooks.
-const isLoadingUser = useIsWaiting(LoadUser);
-const isLoadingPosts = useIsWaiting(LoadPosts);
-const isLoading = isLoadingUser || isLoadingPosts;
+const isLoading = useIsWaiting([LoadUser, LoadPosts]);
 ```
 
 This is on purpose. In TanStack Query, the library owns every request, so counting them makes
