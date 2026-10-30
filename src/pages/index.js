@@ -17,11 +17,8 @@ function HomepageHeader() {
         <img src="img/react.svg" alt="React" style={{ width: 62, height: 42 }} />
         <img src="img/StateManagement.svg" alt="State Management for React" style={{ width: 360, height: 40 }} />
         <Heading as="h1" className="hero__title" style={{ marginTop: 20 }}>
-          Built for AI coding agents
+          Built for AI agents
         </Heading>
-        <p style={{ fontSize: '1.3rem' }}>
-          Your agent writes structured, testable code. You can still read every line.
-        </p>
         <Link
           className="button button--primary button--lg"
           style={{ marginTop: 5, alignItems: 'center' }}
@@ -34,12 +31,6 @@ function HomepageHeader() {
             }}>»</span>
           </span>
         </Link>
-        <p style={{ fontSize: '1.1rem', marginTop: 30, marginBottom: 8 }}>Or give this to your agent:</p>
-        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'left' }}>
-          <CodeBlock language="text">
-            Read https://kissforreact.org/kiss-state-management-docs.md and use Kiss for state management.
-          </CodeBlock>
-        </div>
       </div>
     </header>
   );
@@ -59,6 +50,3 @@ export default function Home() {
     </Layout>
   );
 }
-
-
-
