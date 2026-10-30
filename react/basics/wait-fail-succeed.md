@@ -94,12 +94,12 @@ We have already previously seen how to read the state and dispatch actions from 
 ```tsx    
 function MyComponent() {
 
-  const state = useAllState<State>(); 
+  const counter = useSelect((state: State) => state.counter);
   const store = useStore();
   
   return (
     <div>
-      <p>Counter: {state.counter}</p>
+      <p>Counter: {counter}</p>
       <button onClick={() => store.dispatch(new IncrementAction())}>Increment</button>
     </div>
   );
@@ -107,6 +107,11 @@ function MyComponent() {
 ```
 
 Now, let's see how to show a spinner while an action is being processed, and show an error message.
+The examples use `LoadText`, an async action that loads some text from a server. Its code is
+shown [below](#combining-iswaiting-and-isfailed).
+
+A spinner needs an async action. A sync action, like `IncrementAction`, finishes during its
+dispatch, so `useIsWaiting(IncrementAction)` is always false.
 
 ## Show a spinner
 
@@ -116,15 +121,15 @@ processed. By using this hook, you can show a spinner while an action is being p
 ```tsx
 function MyComponent() {
 
-  const isWaiting = useIsWaiting(IncrementAction);
-  const state = useAllState<State>(); 
+  const isWaiting = useIsWaiting(LoadText);
+  const text = useSelect((state: State) => state.someText);
     
   return (
     <div>
       {
       isWaiting 
         ? <CircularProgress /> 
-        : <p>Counter: {state.counter}</p>
+        : <p>{text}</p>
       }
     </div>
   );
@@ -133,22 +138,22 @@ function MyComponent() {
 
 ## Show an error message
 
-Hook `useIsFailed(actionType)` returns true if the given action type just failed
-with a `UserException`.
+Hook `useIsFailed(actionType)` returns true if the given action type just failed,
+with any error.
 By using this hook, you can show an error message when an action fails:
 
 ```tsx
 function MyComponent() {
 
-  const isFailed = useIsFailed(IncrementAction);
-  const state = useAllState<State>(); 
+  const isFailed = useIsFailed(LoadText);
+  const text = useSelect((state: State) => state.someText);
     
   return (
     <div>
       {
       isFailed 
         ? <p>Loading failed...</p> 
-        : <p>Counter: {state.counter}</p>
+        : <p>{text}</p>
       }
     </div>
   );
@@ -162,16 +167,16 @@ to eventually show it in the UI.
 ```tsx
 function MyComponent() {
 
-  const isFailed = useIsFailed(IncrementAction);
-  const exception = useExceptionFor(IncrementAction);
-  const state = useAllState<State>(); 
+  const isFailed = useIsFailed(LoadText);
+  const exception = useExceptionFor(LoadText);
+  const text = useSelect((state: State) => state.someText);
     
   return (
     <div>
       {
       isFailed 
         ? <p>Loading failed: {exception?.message}</p>
-        : <p>Counter: {state.counter}</p>
+        : <p>{text}</p>
       }
     </div>
   );
@@ -209,11 +214,11 @@ function MyComponent() {
 
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const state = useAllState<State>();  
+  const text = useSelect((state: State) => state.someText);
   
   if (isWaiting) return <CircularProgress />
   if (isFailed) return <p>Loading failed...</p>;
-  return <p>{state.someText}</p>;
+  return <p>{text}</p>;
 }
 ```
 
@@ -224,7 +229,7 @@ function MyComponent() {
 
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const state = useAllState<State>();  
+  const text = useSelect((state: State) => state.someText);
   const store = useStore();
   
   if (isWaiting) return <CircularProgress />
@@ -236,7 +241,7 @@ function MyComponent() {
     </div>
   );
   
-  return <p>{state.someText}</p>;
+  return <p>{text}</p>;
 }
 ```
 
@@ -419,10 +424,10 @@ Two things to know about React's Suspense:
 
 <hr></hr>
 
-You now know the basics of Kiss: 
-How to create and read the state, dispatch actions to change the state,
-run asynchronous actions, show spinners when actions are running, and error messages when they fail.
-That is enough for you to be productive with Kiss, and create your own apps with it.
+You now know the core of Kiss: how to create and read the state, dispatch actions to change
+the state, run asynchronous actions, show spinners while actions run, and show error messages
+when they fail.
 
-But before we enter the advanced features, let's review the basics by implementing a few simple
-counter apps.
+The next page, [events](./events), is the last basic topic: how an action asks a component to
+do something once, like clearing an input or scrolling a list. After it, the
+[counter app examples](./counter-app-examples) review the basics.
