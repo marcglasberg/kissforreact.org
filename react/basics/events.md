@@ -245,8 +245,6 @@ Yes. The `Evt` object never changes. It's the **store** that remembers which eve
 in a `WeakSet`. This means:
 
 - State classes stay immutable, and Kiss keeps comparing states by identity.
-- Two stores that share a state object with the same event (for example, in two tests)
-  each spend it on their own.
 - Events nobody references anymore are garbage collected.
 
 ### Why can't I consume an event during render?
