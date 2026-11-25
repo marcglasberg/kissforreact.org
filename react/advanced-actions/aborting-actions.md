@@ -18,8 +18,9 @@ class UploadFile extends Action {
   constructor(readonly file: File) { super(); }
 
   async reduce() {
-    let response = await fetch('/api/upload', { method: 'POST', body: this.file, signal: this.abortSignal });
-    let { url } = await response.json();
+    const response = await fetch('/api/upload', { method: 'POST', body: this.file, signal: this.abortSignal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const { url } = await response.json();
     return (state: State) => state.copy({ uploadedUrl: url });
   }
 }

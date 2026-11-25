@@ -487,6 +487,7 @@ class LoadPage extends Action {
 
   async reduce() {
     const response = await fetch(`/api/items?page=${this.page}`, { signal: this.abortSignal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const items = await response.json();
     return (state: State) => state.copy({ items });
   }
@@ -796,7 +797,11 @@ cancelled with `cancelQueries`:
 ```tsx
 useQuery({
   queryKey: ['items', page],
-  queryFn: ({ signal }) => fetch(`/api/items?page=${page}`, { signal }).then((r) => r.json()),
+  queryFn: async ({ signal }) => {
+    const response = await fetch(`/api/items?page=${page}`, { signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  },
 });
 
 queryClient.cancelQueries({ queryKey: ['items'] });

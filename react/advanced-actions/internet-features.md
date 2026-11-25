@@ -220,8 +220,9 @@ class LoadInitialData extends Action {
   unlimitedRetryCheckInternet = true
 
   async reduce() {
-    let response = await fetch('https://example.com/initialData');
-    let data = await response.json();
+    const response = await fetch('https://example.com/initialData');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
     return (state: State) => state.copy({ data });
   }
 }

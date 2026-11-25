@@ -171,6 +171,7 @@ arrive later. The aborted action's `abortSignal` is aborted, so pass it to `fetc
 ```tsx
 async loadPage(cursor: string | null) {
   const response = await fetch(`/api/todos?after=${cursor ?? ''}`, { signal: this.abortSignal });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return await response.json() as Todo[];
 }
 ```

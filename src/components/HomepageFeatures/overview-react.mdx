@@ -223,8 +223,9 @@ class LoadText extends Action {
   async reduce() {
 
     // Download something from the internet
-    let response = await fetch('https://dummyjson.com/todos/1');
-    let text = await response.text(); 
+    const response = await fetch('https://dummyjson.com/todos/1');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
 
     // Change the state with the downloaded information
     return (state: string) => text;
@@ -592,8 +593,9 @@ class LoadTab extends Action {
   ignoreOld = true;
 
   async reduce() {
-    let response = await fetch(`/api/items?tab=${this.tab}`, {signal: this.abortSignal});
-    let items = await response.json();
+    const response = await fetch(`/api/items?tab=${this.tab}`, {signal: this.abortSignal});
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const items = await response.json();
     return (state: State) => state.copy({items});
   }
 }

@@ -139,9 +139,10 @@ that fetches a random text from the internet and adds it to the state:
 class AddRandomText extends Action {
 
   async reduce() {
-    let response = await fetch("https://dummyjson.com/todos/random/1");        
-    let jsonResponse = await response.json();
-    let text = jsonResponse[0].todo;
+    const response = await fetch("https://dummyjson.com/todos/random/1");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const jsonResponse = await response.json();
+    const text = jsonResponse[0].todo;
      
     return (state: State) => state.copy({text: text});
   }
@@ -153,7 +154,7 @@ class AddRandomText extends Action {
 If an error occurs, your action can simply **throw it**.
 In this case, the state will not change.
 
-Let's modify the previous `AddRandomText` action to throw an error if the fetch fails:
+Use a `UserException` to give the user a message when the server returns an HTTP error:
 
 ```tsx
 import { UserException } from "kiss-for-react";

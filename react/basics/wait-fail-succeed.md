@@ -195,8 +195,9 @@ to turn any error into a `UserException` with a message:
 class LoadText extends Action {
 
   async reduce() {
-    let response = await fetch('https://www.example.com/text');
-    let text = await response.text();
+    const response = await fetch('https://www.example.com/text');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
     return (state: State) => state.copy({someText: text});
   }
 

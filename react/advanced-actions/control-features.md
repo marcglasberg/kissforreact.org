@@ -36,7 +36,8 @@ class SaveText extends Action {
   nonReentrant = true;
 
   async reduce() {
-    await fetch('https://myapi.com/save', { method: 'PUT', body: 'data' });
+    const response = await fetch('https://myapi.com/save', { method: 'PUT', body: 'data' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return null;
   }
 }
@@ -609,8 +610,9 @@ class LoadTab extends Action {
   ignoreOld = true;
 
   async reduce() {
-    let response = await fetch(`/api/items?tab=${this.tab}`, { signal: this.abortSignal });
-    let items = await response.json();
+    const response = await fetch(`/api/items?tab=${this.tab}`, { signal: this.abortSignal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const items = await response.json();
     return (state: State) => state.copy({ items });
   }
 }
@@ -750,8 +752,9 @@ old, and vice versa.
     ignoreOld = true;
 
     async reduce() {
-      let response = await fetch(`/api/search?q=${this.searchTerm}`, { signal: this.abortSignal });
-      let result = await response.json();
+      const response = await fetch(`/api/search?q=${this.searchTerm}`, { signal: this.abortSignal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
       return (state: State) => state.copy({ searchResult: result });
     }
   }
@@ -1290,7 +1293,8 @@ class SaveItem extends Action {
   sequential = true;
 
   async reduce() {
-    await fetch('https://myapi.com/items', { method: 'PUT', body: JSON.stringify(this.item) });
+    const response = await fetch('https://myapi.com/items', { method: 'PUT', body: JSON.stringify(this.item) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return null;
   }
 }
