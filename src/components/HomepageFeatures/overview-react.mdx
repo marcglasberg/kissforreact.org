@@ -16,14 +16,11 @@ Kiss helps AI agents stay on track, session after session, while spending fewer 
 The **store** holds all application **state**. Here are a few examples:
 
 ```tsx
-// Your state is a number
-const store = createStore<number>({initialState: 1});
-
 // Your state is a plain JavaScript object
 const store = createStore({initialState: {name: 'Mary', age: 25}});
 
 // Your state is an instance of an ES6 class
-class State { constructor(public name: string, public age: number){} }
+class State { constructor(readonly name: string, readonly age: number){} }
 const store = createStore<State>({initialState: new State('Mary', 25)});
 ```
 
@@ -81,27 +78,19 @@ function MyComponent() {
 };
 ```
 
-These hooks connect to the store with React's own
-[`useSyncExternalStore`](https://react.dev/reference/react/useSyncExternalStore),
-so React reads the state itself, compares what each component selected, and renders only
-the components whose selection changed. React also checks the state again before
-committing a
-render it paused (a transition), and renders again if the state changed meanwhile, so a
-screen never shows parts of two different states at the same time.
-
 &nbsp;
 
 # Actions and reducers
 
 An **action** is a class with its own **reducer** function.
-This reducer has access to the current state and returns a new state.
+This reducer has access to the current state and must return a new state.
 
 ```tsx
 class Increment extends Action {
 
   reduce() { 
-    // The reducer has access to the current state
-    return this.state + 1; // It returns a new state 
+    // The reducer has access to the current state `{ count: 0 }`
+    return { count: this.state.count + 1 }; // It returns a new state
   };
 }
 ```
@@ -213,7 +202,11 @@ for an "offline" banner.
 Actions can fetch data from the internet or do any other async work.
 
 ```tsx
-const store = createStore<string>({initialState: ''});
+type State = { text: string; count: number };
+
+const store = createStore<State>({
+  initialState: { text: '', count: 0 },
+});
 ```
 
 ```tsx
@@ -228,7 +221,7 @@ class LoadText extends Action {
     const text = await response.text();
 
     // Change the state with the downloaded information
-    return (state: string) => text;
+    return (state: State) => ({ ...state, text });
   }
 }
 ```
@@ -252,7 +245,7 @@ class LoadText extends Action {
     if (!response.ok) throw new UserException("Failed to load.");    
     
     let text = await response.text();     
-    return (state: string) => text;
+    return (state: State) => ({ ...state, text });
   }
 }
 ```
@@ -270,11 +263,11 @@ function MyComponent() {
 
   const isWaiting = useIsWaiting(LoadText); 
   const isFailed = useIsFailed(LoadText);  
-  const state = useAllState<string>();  
+  const text = useSelect((state: State) => state.text);
   
   if (isWaiting) return <CircularProgress />
   if (isFailed) return <p>Loading failed...</p>;
-  return <p>{state}</p>;
+  return <p>{text}</p>;
 }
 ```
 
@@ -971,8 +964,8 @@ information to the console during development, and an `errorObserver` to log err
 and to change them before they are handled.
 
 ```tsx
-const store = createStore<string>({    
-  initialState: '',
+const store = createStore({
+  initialState: {text: ''},
   stateObserver: (action, prevState, newState, error, count) => { ... },
   actionObserver: (action, count, ini) => { ... },
   errorObserver: ({ error, originalError, action, store }) => { ... },
