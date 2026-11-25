@@ -62,7 +62,7 @@ import { State, TodoList, TodoItem, Filter } from "./State";
 let persistor = new ClassPersistor<State>(
   async () => window.localStorage.getItem("state"),
   async (serialized: string) => window.localStorage.setItem("state", serialized),
-  async () => window.localStorage.clear(),
+  async () => window.localStorage.removeItem("state"),
   [State, TodoList, TodoItem, Filter]
 );
 
@@ -191,8 +191,8 @@ function ListOfTodos() {
 
   return (
     <div className="listOfTodos">
-      {todoItems.map((item, index) => (
-        <TodoItemComponent key={index} item={item} />
+      {todoItems.map((item) => (
+        <TodoItemComponent key={item.text} item={item} />
       ))}
     </div>
   );

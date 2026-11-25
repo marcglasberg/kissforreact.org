@@ -125,10 +125,11 @@ class State {
   constructor(
     readonly todos: readonly Todo[],
     readonly user: User | null,
+    readonly usersById: Readonly<Record<string, User | undefined>> = {},
   ) {}
 
   copy(changes: Partial<State>): State {
-    return Object.assign(new State(this.todos, this.user), changes);
+    return Object.assign(new State(this.todos, this.user, this.usersById), changes);
   }
 
   static initialState = new State([], null);
@@ -400,14 +401,28 @@ With Kiss, spinners and error messages are the hooks shown above. The rest are
 
 ```ts title="Kiss"
 class FetchUser extends Action {
-  fresh = 60000;          // Don't fetch again for 60 seconds. The data is still fresh.
-  nonReentrant = true;    // If it's already running, don't start it again.
-  retry = { on: true };   // If it fails, try again.
-  checkInternet = true;   // If there is no internet, fail at once with a clear message.
+  constructor(readonly userId: string) { super(); }
 
-  async reduce() { ... }
+  fresh = 60_000;
+  retry = { on: true };
+  checkInternet = { dialog: false };
+
+  freshKeyParams() { return this.userId; }
+
+  async reduce() {
+    const user = await this.deps.api.fetchUser(this.userId);
+    return (state: State) => state.copy({
+      usersById: { ...state.usersById, [this.userId]: user },
+    });
+  }
 }
 ```
+
+The [60-second `fresh` window](../advanced-actions/control-features#fresh) starts at dispatch
+and applies per user ID. Components select `state.usersById[userId]`. After the window expires,
+a new request for that ID can start while the first one is still running. To block duplicate
+work until the action and its retries finish, use the
+[separate `retry` and `nonReentrant` pattern](../advanced-actions/control-features#combining-with-nonreentrant).
 
 There is no second cache. The data goes in the state, where everything else is. For
 optimistic updates, extend [OptimisticCommand](../advanced-actions/optimistic-features)

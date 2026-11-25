@@ -180,8 +180,8 @@ function ListOfTodos() {
 
   return (
     <div className="listOfTodos">
-      {todoItems.map((item, index) => (
-        <TodoItemComponent key={index} item={item} />
+      {todoItems.map((item) => (
+        <TodoItemComponent key={item.text} item={item} />
       ))}
     </div>
   );

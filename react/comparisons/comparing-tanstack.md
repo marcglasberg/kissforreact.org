@@ -643,11 +643,15 @@ class LoadUserAndPosts extends Action {
 }
 ```
 
-Or, from a component, with [dispatchWhen](../basics/dispatching-actions#dispatch-when), which
-dispatches an action when a state condition becomes true:
+Or, from a component, use [dispatchWhen](../basics/dispatching-actions#dispatch-when) to load
+posts when the requested user is in the state. This example waits up to 10 seconds:
 
 ```tsx
-store.dispatchWhen(new LoadPosts(userId), (state) => state.user !== null);
+store.dispatchWhen(
+  new LoadPosts(userId),
+  (state) => state.user?.id === userId,
+  { timeoutMillis: 10_000 },
+);
 ```
 
 See also [waitCondition](../miscellaneous/wait-for-condition).

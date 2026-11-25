@@ -584,12 +584,14 @@ action, and the logic is done for you:
 
 ```tsx title="Kiss"
 class LoadTodos extends Action {
-  fresh = 60000;          // Don't reload for 60 seconds. The data is still fresh.
-  nonReentrant = true;    // If it's already running, don't start it again.
-  retry = { on: true };   // If it fails, try again.
-  checkInternet = true;   // If there is no internet, fail at once with a clear message.
+  fresh = 60_000;
+  retry = { on: true };
+  checkInternet = { dialog: false };
 
-  async reduce() { ... }
+  async reduce() {
+    const todos = await this.deps.api.loadTodos();
+    return (state: State) => state.copy({ todos });
+  }
 }
 
 class SearchTodos extends Action {
@@ -599,6 +601,11 @@ class SearchTodos extends Action {
   async reduce() { ... }
 }
 ```
+
+The [60-second `fresh` window](../advanced-actions/control-features#fresh) starts at dispatch.
+After it expires, another dispatch can start a request even if the first one is still running.
+To block duplicate work until the action and its retries finish, use the
+[separate `retry` and `nonReentrant` pattern](../advanced-actions/control-features#combining-with-nonreentrant).
 
 This is only possible because every change goes through `dispatch`. The store sees the action
 before it runs, so it can skip it, delay it, or run it again. For optimistic updates, extend

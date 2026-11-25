@@ -267,15 +267,18 @@ other reason. To retry unlimited times until the internet is available, use
 
 ### Combining with nonReentrant
 
-For most actions that use `retry`, consider also making them
-[non-reentrant](#nonreentrant), to avoid multiple instances of the same action running at the
-same time:
+Use [`nonReentrant`](#nonreentrant) with `retry` when an action must block another execution
+with the same key until it finishes, including while it waits between attempts.
 
 ```tsx
 class LoadText extends Action {
-  retry = {on: true}
+  retry = { on: true };
   nonReentrant = true;
-  ...
+
+  async reduce() {
+    const text = await this.deps.api.loadText();
+    return (state: State) => state.copy({ text });
+  }
 }
 ```
 

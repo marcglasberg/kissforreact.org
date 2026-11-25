@@ -335,7 +335,7 @@ let persistor = new ClassPersistor<State>(
   async (serialized: string) => window.localStorage.setItem('state', serialized),
   
   // deleteSerialized
-  async () => window.localStorage.clear(),
+  async () => window.localStorage.removeItem('state'),
   
   // classesToSerialize
   []
@@ -355,7 +355,7 @@ let persistor = new ClassPersistor<State>(
   async (serialized) => await AsyncStorage.setItem('state', serialized),
   
   // deleteSerialized
-  async () => await AsyncStorage.clear(),
+  async () => await AsyncStorage.removeItem('state'),
   
   // classesToSerialize
   [] 
