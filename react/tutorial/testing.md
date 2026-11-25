@@ -37,9 +37,10 @@ test('AddTodoAction', async () => {
   await store.dispatchAndWait(new AddTodoAction('Some text'));  
   expect(store.state.todoList.items[0].text).toBe('Some text');
   
-  // Fail to add the same text again
-  let status = await store.dispatchAndWait(new AddTodoAction('Some text'));    
-  expect(status.originalError).toBeInstanceOf(UserException);          
+  // Fail to add the same text with extra spaces.
+  const status = await store.dispatchAndWait(new AddTodoAction('  Some text  '));
+  expect(status.originalError).toBeInstanceOf(UserException);
+  expect(store.state.todoList.items).toHaveLength(1);
 });
 ```
 

@@ -297,17 +297,18 @@ class AddTodoAction extends Action {
 
   reduce() {
     // Gets the current todo list.
-    let currentTodoList = this.state.todoList;
+    const currentTodoList = this.state.todoList;
+    const text = this.text.trim();
 
     // If the item being added already exists, throw an error.
-    if (currentTodoList.ifExists(this.text)) {
-      throw new UserException(`The item "${this.text}" already exists.`, {
-        errorText: `Type something else other than "${this.text}"`,
+    if (currentTodoList.ifExists(text)) {
+      throw new UserException(`The item "${text}" already exists.`, {
+        errorText: `Type something else other than "${text}"`,
       });
     }
 
     // Add the item to the list.
-    let newTodoList = currentTodoList.addTodoFromText(this.text);
+    const newTodoList = currentTodoList.addTodoFromText(text);
     
     // Return the new state with the updated list.
     return this.state.withTodoList(newTodoList);

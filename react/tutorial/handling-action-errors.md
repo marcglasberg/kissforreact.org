@@ -16,11 +16,11 @@ of type `UserException` if it does:
 In the `AddTodoAction`:
 
 ```tsx 
-// Check if the item already exists
-if (currentTodoList.ifExists(this.text)) {
+const text = this.text.trim();
+if (currentTodoList.ifExists(text)) {
   throw new UserException(
-    `The item "${this.text}" already exists.`, {
-    errorText: `Type something else other than "${this.text}"`
+    `The item "${text}" already exists.`, {
+    errorText: `Type something else other than "${text}"`
   });
 }
 ```
@@ -138,8 +138,8 @@ which was defined in the `AddTodoAction` action:
 
 ```tsx 
 throw new UserException(
-  `The item "${this.text}" already exists.`, {
-    errorText: `Type something else other than "${this.text}"`
+  `The item "${text}" already exists.`, {
+    errorText: `Type something else other than "${text}"`
   });
 ```
 
@@ -301,8 +301,8 @@ To disable showing the dialog for **some** specific errors,
 simply add `.noDialog` to them:
 
 ```tsx
-throw new UserException(`The item "${this.text}" already exists.`, {
-  errorText: `Type something else other than "${this.text}"`,
+throw new UserException(`The item "${text}" already exists.`, {
+  errorText: `Type something else other than "${text}"`,
 }).noDialog; // Here!
 ```
 

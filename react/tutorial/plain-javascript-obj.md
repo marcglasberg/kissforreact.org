@@ -56,17 +56,18 @@ class AddTodoAction extends Action {
 
   reduce() {    
 
-    let ifExists = this.state.todoList.some(
-      (todo) => todo.text.toLowerCase() === this.text.toLowerCase()
+    const text = this.text.trim();
+    const ifExists = this.state.todoList.some(
+      (todo) => todo.text.toLowerCase() === text.toLowerCase()
     );
 
     if (ifExists) {
-      throw new UserException(`The item "${this.text}" already exists.`, {
-        errorText: `Type something else other than "${this.text}"`,
+      throw new UserException(`The item "${text}" already exists.`, {
+        errorText: `Type something else other than "${text}"`,
       });
     }
 
-    const capitalizedText = this.text.trim().charAt(0).toUpperCase() + this.text.trim().slice(1);
+    const capitalizedText = text.charAt(0).toUpperCase() + text.slice(1);
     let newItem = { text: capitalizedText, completed: false };
     let newTodoList = [newItem, ...this.state.todoList];
 
@@ -184,13 +185,14 @@ class AddTodoAction extends Action {
 
   reduce() {    
 
-    if (this.state.todoList.ifExists(this.text)) {
-      throw new UserException(`The item "${this.text}" already exists.`, {
-        errorText: `Type something else other than "${this.text}"`,
+    const text = this.text.trim();
+    if (this.state.todoList.ifExists(text)) {
+      throw new UserException(`The item "${text}" already exists.`, {
+        errorText: `Type something else other than "${text}"`,
       });
     }
 
-    let newTodoList = this.state.todoList.addTodoFromText(this.text);
+    const newTodoList = this.state.todoList.addTodoFromText(text);
     return this.state.withTodoList(newTodoList);
   }
 }

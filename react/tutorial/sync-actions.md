@@ -99,25 +99,25 @@ class AddTodoAction extends Action {
 
   reduce() {
   
-    let currentTodoList = this.state.todoList;
+    const currentTodoList = this.state.todoList;
+    const text = this.text.trim();
   
     // Check if the item already exists
-    if (currentTodoList.ifExists(this.text)) {
+    if (currentTodoList.ifExists(text)) {
       throw new UserException(
-        `The item "${this.text}" already exists.`, {
-          errorText: `Type something else other than "${this.text}"`
+        `The item "${text}" already exists.`, {
+          errorText: `Type something else other than "${text}"`
         });
     }
 
-    let newTodoList = currentTodoList.addTodoFromText(this.text);
+    const newTodoList = currentTodoList.addTodoFromText(text);
     return this.state.withTodoList(newTodoList);
   }
 }
 ```
 
-In the code above, we use the `ifExists` function defined in the `TodoList` class to check if the
-new todo item already exists in the list. When it does, we throw a `UserException` with an error
-message.
+We trim the input before calling `TodoList.ifExists` and use the trimmed text for insertion.
+If that text already exists in the list, the action throws a `UserException`.
 
 Throwing a `UserException` from inside actions is ok. The app will not crash!
 Kiss will catch the exception and handle it properly:
