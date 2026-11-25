@@ -234,10 +234,9 @@ class LogoutAction extends Action {
 Third-party code may also throw errors which should not be considered bugs,
 but simply messages to be displayed in a dialog to the user.
 
-For example, Firebase may throw some `PlatformException` errors
-in response to a bad connection to the server.
-In this case, it may be a good idea to convert this error into a `UserException`,
-so that a dialog appears to the user with the error message.
+For example, the [Firestore JavaScript SDK](https://firebase.google.com/docs/reference/js/firestore#firestoreerrorcode)
+uses the error code `unavailable` when the service is temporarily unavailable.
+You can convert that error into a `UserException` to show a message to the user.
 
 There are two ways to do that. One of them we already discussed above:
 Just convert it in the action itself
@@ -246,16 +245,12 @@ by implementing the optional `wrapError()` function:
 ```ts
 class MyAction extends Action {
   
-  wrapError(error: any) {
-    if (error instanceof PlatformException 
-      && error.code === "Error performing get" 
-      && error.message === 'Failed to get document because the client is offline'
-      ) {
-      return new UserException('Check your internet connection').withHardCause(error);
-    } else { 
-      return error;
-    }   
-  }    
+  wrapError(error: unknown) {
+    if (error instanceof Error && 'code' in error && error.code === 'unavailable') {
+      return new UserException('Firestore is temporarily unavailable. Try again.').withHardCause(error);
+    }
+    return error;
+  }
 }
 ```
 
@@ -267,14 +262,10 @@ A better way is doing it globally, in the `errorObserver`, when you create the s
 const store = createStore<State>({
   initialState: new State(),
   errorObserver: ({ error }) => {
-    if (error instanceof PlatformException 
-      && error.code === "Error performing get" 
-      && error.message === 'Failed to get document because the client is offline'
-      ) {
-      return new UserException('Check your internet connection').withHardCause(error);
-    } else { 
-      return error;
+    if (error instanceof Error && 'code' in error && error.code === 'unavailable') {
+      return new UserException('Firestore is temporarily unavailable. Try again.').withHardCause(error);
     }
+    return error;
   },
 });
 ```

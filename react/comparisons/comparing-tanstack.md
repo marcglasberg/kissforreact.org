@@ -897,7 +897,7 @@ also retries if the action fails:
 
 ```tsx
 class LoadText extends Action {
-  checkInternet = true;
+  checkInternet = { dialog: false };
   async reduce() { ... }
 }
 
