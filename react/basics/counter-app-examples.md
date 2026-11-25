@@ -12,56 +12,9 @@ let's review the basics by creating a few simple "counter application" examples.
 The examples below are editable and runnable.
 You can change the code and see the results in real-time.
 
-## State as a number
-
-Let's start as simple as possible.
-In this first example, the state is just a number of type `number`,
-and the initial state is `0`:
-
-```tsx
-const store = createStore<number>({
-  initialState: 0,
-});
-```
-
-We'll create an `Increment` action that increments that state by 1, every time it's dispatched.
-Since the state itself is just a number,
-the action reducer must return `this.state + 1` to increment it.
-
-```tsx
-class Increment extends KissAction<number> {
-  reduce() {
-    return this.state + 1; 
-  }
-}
-```
-
-To create a component that shows the counter in the screen,
-we use the `useAllState` hook. This hooks returns the whole state,
-which here is the counter value itself: `const counter = useAllState<number>()`.
-
-We also need a second hook called `useStore`, which gives us a reference to the store
-with `const store = useStore()`. This is necessary because when the user clicks
-a button we want to dispatch the `Increment` action with `store.dispatch(...)`.
-
-Please read the code below and see if you understand everything.
-
-<iframe
-src="https://codesandbox.io/embed/vprx7v?view=split&module=%2Fsrc%2FApp.tsx&hidenavigation=1&fontsize=12.5&editorsize=70&previewwindow=browser"
-style={{ width:'100%', height: '650px', border:'5px solid #58B87A', borderRadius: '4px' }}
-title="counter-async-redux-example"
-sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-/>
-
-<br></br>         
-<br></br>
-
-Try modifying the above code to add a second button named "Decrement" that decrements the counter
-by 1 by dispatching an action called `Decrement`.
-
 ## State as a plain JavaScript object
 
-In this second example, the state is a plain JavaScript object.
+The first example uses a plain JavaScript object as state.
 If we use TypeScript, we can define its type like this:
 
 ```tsx
@@ -116,11 +69,10 @@ const counter = useSelect((state: State) => state.counter);
 In other words, this is an optimization which will prevent unnecessary re-renders when the parts
 of the state that change are not the ones we are interested in, in this particular component.
 
-Just as before, we'll also use the `useStore` hook to get a reference to the store and dispatch
+We also use the `useStore` hook to get a reference to the store and dispatch
 the action.
 
-Please read the code below, see if you understand everything,
-and compare it with the previous example.
+Try adding a Decrement button that dispatches an action to subtract one from the counter.
 
 <iframe
 src="https://codesandbox.io/embed/j57yz5?view=split&module=%2Fsrc%2FApp.tsx&hidenavigation=1&fontsize=12.5&editorsize=70&previewwindow=browser"
@@ -131,7 +83,7 @@ sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-ori
 
 ## State as a class
 
-In this third example, the state is of type `State`, which is a **class** we'll create.
+In this example, the state is of type `State`, which is a **class** we'll create.
 It could contain all sorts of information, but in this case, it's just a number counter:
 
 ```tsx

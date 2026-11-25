@@ -28,21 +28,9 @@ const store = createStore<State>({ initialState: ... });
 const store = new Store<State>({ initialState: ... }); 
 ```
 
-### State as a number
-
-Let's start as simple as possible.
-In this first example, the state is just a number of type `number`,
-and the initial state is `0`:
-
-```tsx
-const store = createStore<number>({
-  initialState: 0,
-});
-```
-
 ### State as a plain JavaScript object
 
-In this second example, the state is a plain JavaScript object.
+The first example uses a plain JavaScript object as state.
 If we use TypeScript, we can define its type like this:
 
 ```tsx
@@ -81,7 +69,7 @@ with a simple click, in IDEs like VS Code and IntelliJ.
 
 Also note, Kiss can serialize ES6 classes just fine.
 
-In this third example, the state is of type `State`, which is a **class** we'll create.
+In this example, the state is of type `State`, which is a **class** we'll create.
 It could contain all sorts of information, but in this case, it's just a number counter:
 
 ```tsx
