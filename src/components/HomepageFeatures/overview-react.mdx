@@ -130,7 +130,7 @@ await store.dispatchAndWait(new Increment());
 await store.dispatchAndWaitAll([new Increment(), new LoadText()]);
 
 // Dispatch an action when the state meets a condition
-store.dispatchWhen(new LoadText(), (state) => state.count >= 3);
+store.dispatchWhen(new LoadText(), (state) => state.count >= 3, { timeoutMillis: 0 });
 ```
 
 &nbsp;

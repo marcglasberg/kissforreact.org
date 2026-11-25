@@ -130,8 +130,10 @@ class LoadText extends Action {
   retry = {on: true}
 
   async reduce() {
-    let response = await fetch('https://example.com/text');
-    let text = await response.text();
+    const response = await fetch('https://example.com/text');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const text = await response.text();
     return (state: State) => state.copy({ text });
   }
 }

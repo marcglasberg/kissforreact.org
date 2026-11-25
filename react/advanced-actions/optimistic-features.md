@@ -81,12 +81,9 @@ class AddTodo extends Action {
   constructor(readonly todo: Todo) { super(); }
 
   async reduce() {
-    try {
-      await api.addTodo(this.todo);
-    } finally {
-      let todos = await api.loadTodos();
-      return (state: State) => state.copy({ todos });
-    }
+    await api.addTodo(this.todo);
+    const todos = await api.loadTodos();
+    return (state: State) => state.copy({ todos });
   }
 }
 ```
